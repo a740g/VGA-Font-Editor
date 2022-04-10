@@ -2,8 +2,8 @@
 
 This is an editor and creator for VGA ROM fonts. This also has code for rendering text using a loaded font. The source is written in QB64 and works natively without using any third party libraries.
 
-[Screenshot](Screenshot 1.png)
-[Screenshot](Screenshot 2.png)
+![Screenshot](Screenshot1.png)
+![Screenshot](Screenshot2.png)
 
 ## What is a VGA ROM font?
 
