@@ -26,7 +26,6 @@ Option Base 1
 Const APP_NAME$ = "VGA Font Editor"
 ' This allows the executable window & it's contents to be resized.
 $Resize:Smooth
-Title APP_NAME
 ' Debugging stuff.
 '$Debug
 '$Asserts:Console
@@ -209,7 +208,11 @@ Dim Shared sClipboard As String
 ' Change to the directory specified by the environment
 ChDir StartDir$
 
-' Allow the program to run fullscreen with Alt+Enter
+' Change to graphics mode 320x200
+Screen 7
+Title APP_NAME
+
+' Allow the program window to run fullscreen with Alt+Enter
 AllowFullScreen SquarePixels , Smooth
 
 ' Default's to command line event on program entry
@@ -290,8 +293,7 @@ Function ChooseCharacter%%
     ' Save the current time
     refTime = Timer
 
-    ' Swith to graphics mode
-    Screen 7
+    Cls
 
     ' Show some info
     Color 4
@@ -317,6 +319,7 @@ Function ChooseCharacter%%
 
     ' Also draw the help text on a different page
     Screen , , 1, 0
+    Cls
     Color 4
     Print "Quick help:"
     Print
@@ -434,9 +437,6 @@ Function ChooseCharacter%%
                 End If
         End Select
     Loop
-
-    Screen 0
-    Width 80, 25
 End Function
 
 
@@ -605,8 +605,7 @@ Function EditCharacter%%
     ' Save the current time
     refTime = Timer
 
-    ' Switch to graphics mode
-    Screen 7
+    Cls
 
     ' Display some help
     Color 4
@@ -809,9 +808,6 @@ Function EditCharacter%%
                 End If
         End Select
     Loop
-
-    Screen 0
-    Width 80, 25
 End Function
 
 
@@ -986,8 +982,7 @@ End Function
 
 
 Function ShowPreview%%
-    ' Swith to graphics mode
-    Screen 7
+    Cls
 
     ' Draw a box on the screen
     ' First draw top and bottom edges
@@ -1027,9 +1022,6 @@ Function ShowPreview%%
     DrawString "lazy dog.", 8, ubFontHeight * 10, 11, 0
 
     WaitKeyPress
-
-    Screen 0
-    Width 80, 25
 
     ShowPreview = EVENT_CHOOSE
 End Function
