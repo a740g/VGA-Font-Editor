@@ -1,13 +1,13 @@
 # What is this?
 
-This is an editor and creator for VGA ROM fonts. This also has code for rendering text using a loaded font. The source is written in QB64 and works natively without using any third party libraries.
+This is an editor and creator for VGA ROM fonts. This also has code for rendering text using a loaded font. The source code is written in QB64 and works natively without using any third party libraries.
 
 ![Screenshot](Screenshot1.png)
 ![Screenshot](Screenshot2.png)
 
 ## What is a VGA ROM font?
 
-These are fonts embedded in the VGA ROM BIOS. To learn more about VGA ROM fonts see
+These are fonts that are embedded in the VGA ROM BIOS. To learn more about VGA ROM fonts see:
 
 - [VGA Fonts](https://wiki.osdev.org/VGA_Fonts)
 - [VGA ROM Fonts](http://www.alexandrugroza.ro/microelectronics/essays-research/vga-rom-fonts/index.html)
@@ -40,7 +40,7 @@ The full bitmap contains bitmaps for every character, thus it's 256*16 bytes, 40
 
 ## What are these FNT files?
 
-These font are created using the VGA font editor tool or the bin2fnt conversion tool. These files are extemely small suitable for embedded, memory limited or retro projects. The file itself is almost a raw dump of the VGA ROM font with just 5 bytes for the header.
+These fonts were created using the VGA font editor tool and the bin2fnt conversion tool. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just 5 bytes for the header.
 
 ```
                FONT FILE FORMAT
@@ -95,7 +95,7 @@ These font are created using the VGA font editor tool or the bin2fnt conversion 
 
 ## What can I do with this?
 
-Anything you want! You may use the file format or sourcecode for embedded, retro, game projects and more. This does not require you to have DOS or any old PC hardware. All code here is written for modern hardware. The font file format is super simple and the text rending code is straightforward and clean. With very little effort, the rendering code can be ported to your favorite language and library. There are many example fonts in the `fonts` directory. I honest do not know the orginal souces of these and highly recommend you create your own fonts using the tool for your projects.
+Anything you want! You may use the file format or sourcecode for embedded, retro, game projects and more. This does not require you to have DOS or any old PC hardware. All code here is written for modern hardware. The font file format is super simple and the text rendering code is straightforward and clean. With very little effort, the rendering code can be ported to your favorite programming language and library. There are many example fonts in the `fonts` directory. I honestly do not know the orginal souces of these and highly recommend you to create your own fonts using this tool for your projects.
 
 | File | Function | Description |
 |------|----------|-------------|
