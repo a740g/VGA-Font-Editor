@@ -60,7 +60,7 @@ Dim binfilehandle As Long
 binfilehandle = FreeFile
 Open binfilename For Binary Access Read As binfilehandle
 
-If LOF(binfilehandle) < 256 * 8 Or LOF(binfilehandle) > 256 * 16 Then
+If LOF(binfilehandle) Mod 256 <> 0 Then
     Print
     Print binfilename; " is probably not a VGA ROM font! Please check."
 
@@ -85,7 +85,7 @@ Open fntfilename For Binary Access Write As fntfilehandle
 
 Dim buffer As String
 
-Print "Creating "; fntfilename; "...";
+Print "Creating 8 x"; LOF(binfilehandle) / 256; "font: "; fntfilename; "...";
 
 buffer = "FONT"
 Put fntfilehandle, , buffer
