@@ -22,8 +22,8 @@ Option ExplicitArray
 ' Array lower bounds should always start from 1 unless explicitly specified.
 ' This allows a(4) as integer to have 4 members with index 1-4.
 Option Base 1
-' All arrays should be allocated dynamically by default. This allows us to easily resize arrays.
-'$DYNAMIC
+' All arrays should be static by default. Allocate dynamic array using ReDim
+'$Static
 ' For text mode programs, uncomment the three lines below.
 $Console
 $ScreenHide

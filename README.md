@@ -40,7 +40,7 @@ The full bitmap contains bitmaps for every character, thus it's 256*16 bytes, 40
 
 ## What are these FNT files?
 
-These fonts were created using the VGA font editor tool and the bin2fnt conversion tool. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just 5 bytes for the header.
+These fonts were created using the bin2fnt conversion tool from raw VGA ROM font dumps from various sources. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just 5 bytes for the header.
 
 ```
                FONT FILE FORMAT
@@ -101,7 +101,7 @@ Anything you want! You may use the file format or sourcecode for embedded, retro
 |------|----------|-------------|
 |**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | DrawCharacter() | QB64 - Draws a glyph  |
 |**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | DrawString() | QB64 - Draws a string of text |
-|**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | ReadFont() | QB64 - Reads a font file from disk |
+|**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | ReadFont() | QB64 - Loads a font file from disk |
 |**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | WriteFont() | QB64 - Writes a font file to disk |
-|**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Font::Load() | C++ (DOS) - Load a font file from disk |
+|**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Font::Load() | C++ (DOS) - Loads a font file from disk |
 |**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Graphics::Print() | C++ (DOS) - Draws a string of text (multi-direction) |

@@ -17,11 +17,11 @@ DefLng A-Z
 Option Explicit
 ' All arrarys must be defined.
 Option ExplicitArray
-' Array lower bounds always start from 1 unless explicitly specified.
+' Array lower bounds should always start from 1 unless explicitly specified.
 ' This allows a(4) as integer to have 4 members with index 1-4.
 Option Base 1
-' All arrays should be allocated dynamically by default. This allows us to easily resize arrays.
-'$DYNAMIC
+' All arrays should be static by default. Allocate dynamic array using ReDim
+'$Static
 ' App name
 Const APP_NAME$ = "VGA Font Editor"
 ' This allows the executable window & it's contents to be resized.
@@ -138,44 +138,44 @@ Type FILEDIALOGTYPE
     lStructSize As Long '        For the DLL call
     hwndOwner As Long '          Dialog will hide behind window when not set correctly
     hInstance As Long '          Handle to a module that contains a dialog box template.
-    lpstrFilter As _Offset '     Pointer of the string of file filters
-    lpstrCustFilter As _Offset
+    lpstrFilter As Offset '     Pointer of the string of file filters
+    lpstrCustFilter As Offset
     nMaxCustFilter As Long
     nFilterIndex As Long '       One based starting filter index to use when dialog is called
-    lpstrFile As _Offset '       String full of 0's for the selected file name
+    lpstrFile As Offset '       String full of 0's for the selected file name
     nMaxFile As Long '           Maximum length of the string stuffed with 0's minus 1
-    lpstrFileTitle As _Offset '  Same as lpstrFile
+    lpstrFileTitle As Offset '  Same as lpstrFile
     nMaxFileTitle As Long '      Same as nMaxFile
-    lpstrInitialDir As _Offset ' Starting directory
-    lpstrTitle As _Offset '      Dialog title
+    lpstrInitialDir As Offset ' Starting directory
+    lpstrTitle As Offset '      Dialog title
     flags As Long '              Dialog flags
     nFileOffset As Integer '     Zero-based offset from path beginning to file name string pointed to by lpstrFile
     nFileExtension As Integer '  Zero-based offset from path beginning to file extension string pointed to by lpstrFile.
-    lpstrDefExt As _Offset '     Default/selected file extension
+    lpstrDefExt As Offset '     Default/selected file extension
     lCustData As Long
     lpfnHook As Long
-    lpTemplateName As _Offset
+    lpTemplateName As Offset
     $Else
-        lStructSize As _Integer64 '           For the DLL call
-        hwndOwner As _Integer64 '          Dialog will hide behind window when not set correctly
-        hInstance As _Integer64 '          Handle to a module that contains a dialog box template.
-        lpstrFilter As _Offset '        Pointer of the string of file filters
-        lpstrCustFilter As _Offset
+        lStructSize As Integer64 '           For the DLL call
+        hwndOwner As Integer64 '          Dialog will hide behind window when not set correctly
+        hInstance As Integer64 '          Handle to a module that contains a dialog box template.
+        lpstrFilter As Offset '        Pointer of the string of file filters
+        lpstrCustFilter As Offset
         nMaxCustFilter As Long '       LONG tu a o radek niz => je vyber pripony
         nFilterIndex As Long '         One based starting filter index to use when dialog is called    TOTO nefunguje
-        lpstrFile As _Offset '          String full of 0's for the selected file name
-        nMaxFile As _Integer64 '              Maximum length of the string stuffed with 0's minus 1       zmena z offset
-        lpstrFileTitle As _Offset '     Same as lpstrFile
-        nMaxFileTitle As _Integer64 '      Same as nMaxFile
-        lpstrInitialDir As _Offset '    Starting directory
-        lpstrTitle As _Offset '         Dialog title
-        flags As _Integer64 '                 Dialog flags
-        nFileOffset As _Integer64 '     Zero-based offset from path beginning to file name string pointed to by lpstrFile
-        nFileExtension As _Integer64 '  Zero-based offset from path beginning to file extension string pointed to by lpstrFile.
-        lpstrDefExt As _Offset '        Default/selected file extension
-        lCustData As _Integer64
-        lpfnHook As _Integer64
-        lpTemplateName As _Offset
+        lpstrFile As Offset '          String full of 0's for the selected file name
+        nMaxFile As Integer64 '              Maximum length of the string stuffed with 0's minus 1       zmena z offset
+        lpstrFileTitle As Offset '     Same as lpstrFile
+        nMaxFileTitle As Integer64 '      Same as nMaxFile
+        lpstrInitialDir As Offset '    Starting directory
+        lpstrTitle As Offset '         Dialog title
+        flags As Integer64 '                 Dialog flags
+        nFileOffset As Integer64 '     Zero-based offset from path beginning to file name string pointed to by lpstrFile
+        nFileExtension As Integer64 '  Zero-based offset from path beginning to file extension string pointed to by lpstrFile.
+        lpstrDefExt As Offset '        Default/selected file extension
+        lCustData As Integer64
+        lpfnHook As Integer64
+        lpTemplateName As Offset
     $End If
 End Type
 '-----------------------------------------------------------------------------------------------------
@@ -1009,7 +1009,7 @@ Function ShowPreview%%
     DrawCharacter 182, 312, ubFontHeight * 2, 12, 0
 
     ' Draw the title
-    DrawString "°°°°°±±±±±²²² FONT  DEMO ²²²±±±±±°°°°°", 8, ubFontHeight * 1, 14, 8
+    DrawString "FONT  DEMO", 8 * 14, ubFontHeight * 1, 14, 0
 
     ' Draw the body
     DrawString "This Fox has a longing for grapes:", 8, ubFontHeight * 3, 10, 0
@@ -1018,8 +1018,6 @@ Function ShowPreview%%
     DrawString "And, 'tis said, to this hour", 8, ubFontHeight * 6, 10, 0
     DrawString "Declares that he's no taste for", 8, ubFontHeight * 7, 10, 0
     DrawString "grapes.", 8, ubFontHeight * 8, 10, 0
-    DrawString "The quick brown fox jumps over the", 8, ubFontHeight * 9, 11, 0
-    DrawString "lazy dog.", 8, ubFontHeight * 10, 11, 0
 
     WaitKeyPress
 
