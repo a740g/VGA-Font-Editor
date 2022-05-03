@@ -45,7 +45,7 @@ $VersionInfo:ProductVersion=4,0,0,0
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
-' Some common and useful constants
+' CONSTANTS
 '-----------------------------------------------------------------------------------------------------
 Const FALSE = 0%%, TRUE = Not FALSE
 Const NULL = 0%%
@@ -131,30 +131,30 @@ Const EVENT_COMMAND = 6%%
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
-' Some common and useful types
+' USER DEFINED TYPES
 '-----------------------------------------------------------------------------------------------------
 Type FILEDIALOGTYPE
     $If 32BIT Then
-    lStructSize As Long '        For the DLL call
-    hwndOwner As Long '          Dialog will hide behind window when not set correctly
-    hInstance As Long '          Handle to a module that contains a dialog box template.
-    lpstrFilter As Offset '     Pointer of the string of file filters
-    lpstrCustFilter As Offset
-    nMaxCustFilter As Long
-    nFilterIndex As Long '       One based starting filter index to use when dialog is called
-    lpstrFile As Offset '       String full of 0's for the selected file name
-    nMaxFile As Long '           Maximum length of the string stuffed with 0's minus 1
-    lpstrFileTitle As Offset '  Same as lpstrFile
-    nMaxFileTitle As Long '      Same as nMaxFile
-    lpstrInitialDir As Offset ' Starting directory
-    lpstrTitle As Offset '      Dialog title
-    flags As Long '              Dialog flags
-    nFileOffset As Integer '     Zero-based offset from path beginning to file name string pointed to by lpstrFile
-    nFileExtension As Integer '  Zero-based offset from path beginning to file extension string pointed to by lpstrFile.
-    lpstrDefExt As Offset '     Default/selected file extension
-    lCustData As Long
-    lpfnHook As Long
-    lpTemplateName As Offset
+        lStructSize As Long '        For the DLL call
+        hwndOwner As Long '          Dialog will hide behind window when not set correctly
+        hInstance As Long '          Handle to a module that contains a dialog box template.
+        lpstrFilter As Offset '     Pointer of the string of file filters
+        lpstrCustFilter As Offset
+        nMaxCustFilter As Long
+        nFilterIndex As Long '       One based starting filter index to use when dialog is called
+        lpstrFile As Offset '       String full of 0's for the selected file name
+        nMaxFile As Long '           Maximum length of the string stuffed with 0's minus 1
+        lpstrFileTitle As Offset '  Same as lpstrFile
+        nMaxFileTitle As Long '      Same as nMaxFile
+        lpstrInitialDir As Offset ' Starting directory
+        lpstrTitle As Offset '      Dialog title
+        flags As Long '              Dialog flags
+        nFileOffset As Integer '     Zero-based offset from path beginning to file name string pointed to by lpstrFile
+        nFileExtension As Integer '  Zero-based offset from path beginning to file extension string pointed to by lpstrFile.
+        lpstrDefExt As Offset '     Default/selected file extension
+        lCustData As Long
+        lpfnHook As Long
+        lpTemplateName As Offset
     $Else
         lStructSize As Integer64 '           For the DLL call
         hwndOwner As Integer64 '          Dialog will hide behind window when not set correctly
@@ -181,7 +181,7 @@ End Type
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
-' External library or OS library declarations
+' LIBRARY FUCTIONS
 '-----------------------------------------------------------------------------------------------------
 Declare Dynamic Library "user32"
     Function MessageBoxA& (ByVal oHWnd As Offset, sMessage As String, sTitle As String, Byval ulMBType As Unsigned Long)
@@ -193,6 +193,9 @@ Declare Dynamic Library "comdlg32"
 End Declare
 '-----------------------------------------------------------------------------------------------------
 
+'-----------------------------------------------------------------------------------------------------
+' GLOBAL VARIABLES
+'-----------------------------------------------------------------------------------------------------
 Dim Event As Byte
 Dim Shared sFontFile As String
 Dim Shared sFont(0 To 255) As String
@@ -200,11 +203,11 @@ Dim Shared ubFontHeight As Unsigned Byte
 Dim Shared ubFontCharacter As Unsigned Byte
 Dim Shared bFontChanged As Byte
 Dim Shared sClipboard As String
-
-'-----------------------------------------------------------------------------------------------------
-' Program entry point
 '-----------------------------------------------------------------------------------------------------
 
+'-----------------------------------------------------------------------------------------------------
+' PROGRAM ENTRY POINT
+'-----------------------------------------------------------------------------------------------------
 ' Change to the directory specified by the environment
 ChDir StartDir$
 
@@ -263,12 +266,12 @@ Do
 Loop
 
 System 0 ' Exit immediately with errorlevel 0
-
-'-----------------------------------------------------------------------------------------------------
-' Main program ends here
 '-----------------------------------------------------------------------------------------------------
 
-
+'-----------------------------------------------------------------------------------------------------
+' FUNCTIONS AND SUBROUTINES
+'-----------------------------------------------------------------------------------------------------
+' Changes the font height in memory
 Sub ChangeFontHeight (h As Integer)
     Dim i As Integer
 
@@ -286,6 +289,7 @@ Sub ChangeFontHeight (h As Integer)
 End Sub
 
 
+' This is the character selector routine
 Function ChooseCharacter%%
     Static xp As Integer, yp As Integer
     Dim refTime As Single, blinkState As Integer
@@ -351,8 +355,6 @@ Function ChooseCharacter%%
     Wend
 
     Do
-        'Limit 300
-
         in = GetKey
 
         If MouseInput Then
@@ -370,6 +372,8 @@ Function ChooseCharacter%%
                     Exit Do
                 End If
             End If
+        Else
+            Delay 0.01
         End If
 
         Select Case in
@@ -440,6 +444,7 @@ Function ChooseCharacter%%
 End Function
 
 
+' Handles and command line parameters
 Function DoCommandLine%%
     Dim i As Long
 
@@ -599,6 +604,7 @@ Function GetMouseOverCellPosition%% (mxp As Integer, myp As Integer)
 End Function
 
 
+' This is font bitmap editor routine
 Function EditCharacter%%
     Dim refTime As Single, blinkState As Integer
 
@@ -653,8 +659,6 @@ Function EditCharacter%%
     Wend
 
     Do
-        'Limit 300
-
         in = GetKey
 
         If MouseInput Then
@@ -688,6 +692,8 @@ Function EditCharacter%%
                     Line (xs, ys)-(xs + 8, ys + 8), 1, BF
                 End If
             End If
+        Else
+            Delay 0.01
         End If
 
         Select Case in
@@ -816,6 +822,7 @@ Function GetFontXY% (ch As Unsigned Byte, x As Integer, y As Integer)
 End Function
 
 
+' This is called when a font has to loaded
 Function LoadVGAFont%%
     ' Get an existing font file name from the user
     Dim flags As Integer64, tmpFilename As String
@@ -845,6 +852,7 @@ Function LoadVGAFont%%
 End Function
 
 
+' Loads a font file from disk
 Sub ReadFont (sFile As String)
     Dim hFile As Integer, i As Integer
     Dim sId As String * 4, sFntHgt As String * 1
@@ -878,6 +886,7 @@ Sub ReadFont (sFile As String)
 End Sub
 
 
+' This is called when the file should be saved
 Function SaveVGAFont%%
     ' Get an existing font file name from the user
     Dim flags As Integer64, tmpFilename As String
@@ -899,6 +908,7 @@ Function SaveVGAFont%%
 End Function
 
 
+' Saves the font file to disk
 Sub WriteFont (sFile As String)
     Dim hFile As Integer, i As Integer
     Dim sId As String * 4, sFntHgt As String * 1
@@ -928,6 +938,8 @@ Function MsgBox& (sMessage As String, sTitle As String, BoxType As Long)
 End Function
 
 
+' Abort message box
+' This does not terminate the program
 Sub ShowAbortMsgBox (sMessage As String)
     Dim i As Long
 
@@ -935,6 +947,7 @@ Sub ShowAbortMsgBox (sMessage As String)
 End Sub
 
 
+' Get a 1 or 2 byte keycode from the keyboard buffer
 Function GetKey%
     Dim k As String, i As Integer
 
@@ -951,6 +964,7 @@ Function GetKey%
 End Function
 
 
+' Sleeps until the user presses a key on the keyboard
 Sub WaitKeyPress
     Do
         Sleep
@@ -981,6 +995,7 @@ Function ArgVPresent%% (argv As String, start As Integer)
 End Function
 
 
+' Draws a preview screen using the loaded font
 Function ShowPreview%%
     Cls
 
@@ -1091,7 +1106,7 @@ End Function
 '  sFilter      - File filters separated by pipes (|) in the same format as VB6 common dialogs.
 '  lFilterIndex - The initial file filter to use. Will be altered by user during the call.
 '  llFlags      - Dialog flags. Will be altered by the user during the call.
-
+'
 ' Returns: Blank when cancel is clicked otherwise, the file name entered by the user.
 ' lFilterIndex and llFlags will be changed depending on the user's selections.
 Function GetSaveFileName$ (sTitle As String, sInitialDir As String, sFilter As String, lFilterIndex As Long, llFlags As Integer64)
@@ -1144,4 +1159,5 @@ Function GetSaveFileName$ (sTitle As String, sInitialDir As String, sFilter As S
         lFilterIndex = SaveCall.nFilterIndex
     End If
 End Function
+'-----------------------------------------------------------------------------------------------------
 
