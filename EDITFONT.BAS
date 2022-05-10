@@ -31,15 +31,15 @@ $Resize:Smooth
 '$Asserts:Console
 ' Icon and version info stuff.
 $ExeIcon:'.\editfont.ico'
-$VersionInfo:CompanyName=Samuel Gomes
-$VersionInfo:FileDescription=VGA Font Editor executable
-$VersionInfo:InternalName=EditFont
-$VersionInfo:LegalCopyright=Copyright (c) 1998-2022, Samuel Gomes
-$VersionInfo:LegalTrademarks=All trademarks are property of their respective owners
-$VersionInfo:OriginalFilename=EditFont.exe
-$VersionInfo:ProductName=VGA Font Editor
-$VersionInfo:Web=https://github.com/a740g
-$VersionInfo:Comments=https://github.com/a740g
+$VersionInfo:CompanyName='Samuel Gomes'
+$VersionInfo:FileDescription='VGA Font Editor executable'
+$VersionInfo:InternalName='EditFont'
+$VersionInfo:LegalCopyright='Copyright (c) 1998-2022, Samuel Gomes'
+$VersionInfo:LegalTrademarks='All trademarks are property of their respective owners'
+$VersionInfo:OriginalFilename='EditFont.exe'
+$VersionInfo:ProductName='VGA Font Editor'
+$VersionInfo:Web='https://github.com/a740g'
+$VersionInfo:Comments='https://github.com/a740g'
 $VersionInfo:FILEVERSION#=4,0,0,0
 $VersionInfo:ProductVersion=4,0,0,0
 '-----------------------------------------------------------------------------------------------------
