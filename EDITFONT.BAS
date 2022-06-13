@@ -7,29 +7,15 @@
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
-' These are some metacommands and compiler options for QB64 to write modern & type-strict code
+' METACOMMANDS
 '-----------------------------------------------------------------------------------------------------
-' This will disable prefixing all modern QB64 calls using a underscore prefix.
 $NoPrefix
-' Whatever indentifiers are not defined, should default to signed longs (ex. constants and functions).
 DefLng A-Z
-' All variables must be defined.
 Option Explicit
-' All arrarys must be defined.
 Option ExplicitArray
-' Array lower bounds should always start from 1 unless explicitly specified.
-' This allows a(4) as integer to have 4 members with index 1-4.
 Option Base 1
-' All arrays should be static by default. Allocate dynamic array using ReDim
 '$Static
-' App name
-Const APP_NAME$ = "VGA Font Editor"
-' This allows the executable window & it's contents to be resized.
 $Resize:Smooth
-' Debugging stuff.
-'$Debug
-'$Asserts:Console
-' Icon and version info stuff.
 $ExeIcon:'.\editfont.ico'
 $VersionInfo:CompanyName='Samuel Gomes'
 $VersionInfo:FileDescription='VGA Font Editor executable'
@@ -47,87 +33,91 @@ $VersionInfo:ProductVersion=4,0,0,0
 '-----------------------------------------------------------------------------------------------------
 ' CONSTANTS
 '-----------------------------------------------------------------------------------------------------
-Const FALSE = 0%%, TRUE = Not FALSE
-Const NULL = 0%%
+Const FALSE = 0, TRUE = Not FALSE
+Const NULL = 0
 Const NULLSTRING = ""
 
+' App name
+Const APP_NAME = "VGA Font Editor"
+
 'MessageBox Constant values as defined by Microsoft (MBType)
-Const MB_OK = 0& 'OK button only
-Const MB_OKCANCEL = 1& 'OK & Cancel
-Const MB_ABORTRETRYIGNORE = 2& 'Abort, Retry & Ignore
-Const MB_YESNOCANCEL = 3& 'Yes, No & Cancel
-Const MB_YESNO = 4& 'Yes & No
-Const MB_RETRYCANCEL = 5& 'Retry & Cancel
-Const MB_CANCELTRYCONTINUE = 6& 'Cancel, Try Again & Continue
-Const MB_ICONSTOP = 16& 'Error stop sign icon
-Const MB_ICONQUESTION = 32& 'Question-mark icon
-Const MB_ICONEXCLAMATION = 48& 'Exclamation-point icon
-Const MB_ICONINFORMATION = 64& 'Letter i in a circle icon
-Const MB_DEFBUTTON1 = 0& '1st button default(left)
-Const MB_DEFBUTTON2 = 256& '2nd button default
-Const MB_DEFBUTTON3 = 512& '3rd button default(right)
-Const MB_APPLMODAL = 0& 'Message box applies to application only
-Const MB_SYSTEMMODAL = 4096& 'Message box on top of all other windows
-Const MB_SETFOCUS = 65536& 'Set message box as focus
+Const MB_OK = 0 'OK button only
+Const MB_OKCANCEL = 1 'OK & Cancel
+Const MB_ABORTRETRYIGNORE = 2 'Abort, Retry & Ignore
+Const MB_YESNOCANCEL = 3 'Yes, No & Cancel
+Const MB_YESNO = 4 'Yes & No
+Const MB_RETRYCANCEL = 5 'Retry & Cancel
+Const MB_CANCELTRYCONTINUE = 6 'Cancel, Try Again & Continue
+Const MB_ICONSTOP = 16 'Error stop sign icon
+Const MB_ICONQUESTION = 32 'Question-mark icon
+Const MB_ICONEXCLAMATION = 48 'Exclamation-point icon
+Const MB_ICONINFORMATION = 64 'Letter i in a circle icon
+Const MB_DEFBUTTON1 = 0 '1st button default(left)
+Const MB_DEFBUTTON2 = 256 '2nd button default
+Const MB_DEFBUTTON3 = 512 '3rd button default(right)
+Const MB_APPLMODAL = 0 'Message box applies to application only
+Const MB_SYSTEMMODAL = 4096 'Message box on top of all other windows
+Const MB_SETFOCUS = 65536 'Set message box as focus
 ' Return values from MessageBox
-Const IDOK = 1& 'OK button pressed
-Const IDCANCEL = 2& 'Cancel button pressed
-Const IDABORT = 3& 'Abort button pressed
-Const IDRETRY = 4& 'Retry button pressed
-Const IDIGNORE = 5& 'Ignore button pressed
-Const IDYES = 6& 'Yes button pressed
-Const IDNO = 7& 'No button pressed
-Const IDTRYAGAIN = 10& 'Try again button pressed
-Const IDCONTINUE = 1& 'Continue button pressed
+Const ID_OK = 1 'OK button pressed
+Const ID_CANCEL = 2 'Cancel button pressed
+Const ID_ABORT = 3 'Abort button pressed
+Const ID_RETRY = 4 'Retry button pressed
+Const ID_IGNORE = 5 'Ignore button pressed
+Const ID_YES = 6 'Yes button pressed
+Const ID_NO = 7 'No button pressed
+Const ID_TRYAGAIN = 10 'Try again button pressed
+Const ID_CONTINUE = 1 'Continue button pressed
 
 ' Dialog flag constants (use + or OR to use more than 1 flag value)
-Const OFN_ALLOWMULTISELECT = &H200& ' Allows the user to select more than one file, not recommended!
-Const OFN_CREATEPROMPT = &H2000& ' Prompts if a file not found should be created(GetOpenFileName only).
-Const OFN_EXTENSIONDIFFERENT = &H400& ' Allows user to specify file extension other than default extension.
-Const OFN_FILEMUSTEXIST = &H1000& ' Chechs File name exists(GetOpenFileName only).
-Const OFN_HIDEREADONLY = &H4& ' Hides read-only checkbox(GetOpenFileName only)
-Const OFN_NOCHANGEDIR = &H8& ' Restores the current directory to original value if user changed
-Const OFN_NODEREFERENCELINKS = &H100000& ' Returns path and file name of selected shortcut(.LNK) file instead of file referenced.
-Const OFN_NONETWORKBUTTON = &H20000& ' Hides and disables the Network button.
-Const OFN_NOREADONLYRETURN = &H8000& ' Prevents selection of read-only files, or files in read-only subdirectory.
-Const OFN_NOVALIDATE = &H100& ' Allows invalid file name characters.
-Const OFN_OVERWRITEPROMPT = &H2& ' Prompts if file already exists(GetSaveFileName only)
-Const OFN_PATHMUSTEXIST = &H800& ' Checks Path name exists (set with OFN_FILEMUSTEXIST).
-Const OFN_READONLY = &H1& ' Checks read-only checkbox. Returns if checkbox is checked
-Const OFN_SHAREAWARE = &H4000& ' Ignores sharing violations in networking
-Const OFN_SHOWHELP = &H10& ' Shows the help button (useless!)
+Const OFN_ALLOWMULTISELECT = &H200 ' Allows the user to select more than one file, not recommended!
+Const OFN_CREATEPROMPT = &H2000 ' Prompts if a file not found should be created(GetOpenFileName only).
+Const OFN_EXTENSIONDIFFERENT = &H400 ' Allows user to specify file extension other than default extension.
+Const OFN_FILEMUSTEXIST = &H1000 ' Chechs File name exists(GetOpenFileName only).
+Const OFN_HIDEREADONLY = &H4 ' Hides read-only checkbox(GetOpenFileName only)
+Const OFN_NOCHANGEDIR = &H8 ' Restores the current directory to original value if user changed
+Const OFN_NODEREFERENCELINKS = &H100000 ' Returns path and file name of selected shortcut(.LNK) file instead of file referenced.
+Const OFN_NONETWORKBUTTON = &H20000 ' Hides and disables the Network button.
+Const OFN_NOREADONLYRETURN = &H8000 ' Prevents selection of read-only files, or files in read-only subdirectory.
+Const OFN_NOVALIDATE = &H100 ' Allows invalid file name characters.
+Const OFN_OVERWRITEPROMPT = &H2 ' Prompts if file already exists(GetSaveFileName only)
+Const OFN_PATHMUSTEXIST = &H800 ' Checks Path name exists (set with OFN_FILEMUSTEXIST).
+Const OFN_READONLY = &H1 ' Checks read-only checkbox. Returns if checkbox is checked
+Const OFN_SHAREAWARE = &H4000 ' Ignores sharing violations in networking
+Const OFN_SHOWHELP = &H10 ' Shows the help button (useless!)
 
 ' Keyboard codes
-Const KB_NONE = 0%
-Const KB_ESC = 27%
-Const KB_ENTER = 13%
-Const KB_F1 = 315%
-Const KB_F2 = 316%
-Const KB_F3 = 317%
-Const KB_F5 = 319%
-Const KB_UP = 328%
-Const KB_DOWN = 336%
-Const KB_LEFT = 331%
-Const KB_RIGHT = 333%
-Const KB_DELETE = 339%
-Const KB_CTRLC = 3%
-Const KB_CTRLH = 8%
-Const KB_CTRLI = 9%
-Const KB_CTRLP = 16%
-Const KB_CTRLV = 22%
-Const KB_SPACEBAR = 32%
+Const KB_ESC = 27
+Const KB_ENTER = 13
+Const KB_F1 = 15104
+Const KB_F2 = 15360
+Const KB_F3 = 15616
+Const KB_F5 = 16128
+Const KB_UP = 18432
+Const KB_DOWN = 20480
+Const KB_LEFT = 19200
+Const KB_RIGHT = 19712
+Const KB_DELETE = 21248
+Const KB_C = 99
+Const KB_H = 104
+Const KB_I = 105
+Const KB_P = 112
+Const KB_V = 118
+Const KB_LCTRL = 100306
+Const KB_RCTRL = 100305
+Const KB_SPACEBAR = 32
 
 ' Font file ID
 Const FONT_ID = "FONT"
 
 ' Program events
-Const EVENT_QUIT = 0%%
-Const EVENT_SAVE = 1%%
-Const EVENT_LOAD = 2%%
-Const EVENT_CHOOSE = 3%%
-Const EVENT_EDIT = 4%%
-Const EVENT_PREVIEW = 5%%
-Const EVENT_COMMAND = 6%%
+Const EVENT_QUIT = 0
+Const EVENT_SAVE = 1
+Const EVENT_LOAD = 2
+Const EVENT_CHOOSE = 3
+Const EVENT_EDIT = 4
+Const EVENT_PREVIEW = 5
+Const EVENT_COMMAND = 6
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
@@ -245,11 +235,11 @@ Do
         Case EVENT_QUIT
             If bFontChanged Then
                 Select Case MsgBox("The font has changed. Save it now?", APP_NAME, MB_YESNOCANCEL Or MB_DEFBUTTON1 Or MB_APPLMODAL Or MB_SETFOCUS)
-                    Case IDYES
+                    Case ID_YES
                         Event = SaveVGAFont
                         Exit Do
 
-                    Case IDNO
+                    Case ID_NO
                         Exit Do
 
                     Case Else
@@ -279,12 +269,12 @@ Sub ChangeFontHeight (h As Integer)
 
     ' Change the clipboard font height
     If Len(sClipboard) <> ubFontHeight Then
-        sClipboard = String$(ubFontHeight, 0)
+        sClipboard = String$(ubFontHeight, NULL)
     End If
 
     ' Now change the main font array height
     For i = 0 To 255
-        sFont(i) = String$(ubFontHeight, 0)
+        sFont(i) = String$(ubFontHeight, NULL)
     Next
 End Sub
 
@@ -348,15 +338,13 @@ Function ChooseCharacter%%
     Screen , , 0, 0
 
     Dim As Integer mx, my
-    Dim in As Integer
+    Dim in As Long
 
     ' Clear the mouse event queue
     While MouseInput
     Wend
 
     Do
-        in = GetKey
-
         If MouseInput Then
             If GetMouseOverCharPosiion(mx, my) Then
                 ' Turn off the current highlight
@@ -375,6 +363,8 @@ Function ChooseCharacter%%
         Else
             Delay 0.01
         End If
+
+        in = KeyHit
 
         Select Case in
             Case KB_F1
@@ -652,15 +642,13 @@ Function EditCharacter%%
     Dim xs As Integer, ys As Integer
     Dim v As String, n As Integer
     Dim As Integer mx, my
-    Dim in As Integer
+    Dim in As Long
 
     ' Clear the mouse event queue
     While MouseInput
     Wend
 
     Do
-        in = GetKey
-
         If MouseInput Then
             If GetMouseOverCellPosition(mx, my) Then
                 ' Turn off the current highlight
@@ -695,6 +683,8 @@ Function EditCharacter%%
         Else
             Delay 0.01
         End If
+
+        in = KeyHit
 
         Select Case in
             Case KB_LEFT
@@ -739,56 +729,66 @@ Function EditCharacter%%
                     Line (xs, ys)-(xs + 8, ys + 8), 1, BF
                 End If
 
-            Case KB_CTRLV
-                ' Flag font changed
-                bFontChanged = TRUE
+            Case KB_V
+                If KeyDown(KB_LCTRL) Or KeyDown(KB_RCTRL) Then
+                    ' Flag font changed
+                    bFontChanged = TRUE
 
-                v = sFont(ubFontCharacter)
-                For n = 1 To ubFontHeight
-                    Asc(sFont(ubFontCharacter), n) = Asc(v, 1 + ubFontHeight - n)
-                Next
-                DrawCharBitmap ubFontCharacter
-
-            Case KB_CTRLH
-                ' Flag font changed
-                bFontChanged = TRUE
-
-                v = String$(ubFontHeight, 0)
-                For y = 1 To ubFontHeight
-                    For x = 1 To 8
-                        If GetFontXY(ubFontCharacter, x, y) Then
-                            Asc(v, y) = Asc(v, y) + (2 ^ (x - 1))
-                        End If
+                    v = sFont(ubFontCharacter)
+                    For n = 1 To ubFontHeight
+                        Asc(sFont(ubFontCharacter), n) = Asc(v, 1 + ubFontHeight - n)
                     Next
-                Next
-                sFont(ubFontCharacter) = v
-                DrawCharBitmap ubFontCharacter
+                    DrawCharBitmap ubFontCharacter
+                End If
 
-            Case KB_CTRLI
-                ' Flag font changed
-                bFontChanged = TRUE
+            Case KB_H
+                If KeyDown(KB_LCTRL) Or KeyDown(KB_RCTRL) Then
+                    ' Flag font changed
+                    bFontChanged = TRUE
 
-                v = sFont(ubFontCharacter)
-                For n = 1 To ubFontHeight
-                    Asc(sFont(ubFontCharacter), n) = 255 - Asc(v, n)
-                Next
-                DrawCharBitmap ubFontCharacter
+                    v = String$(ubFontHeight, NULL)
+                    For y = 1 To ubFontHeight
+                        For x = 1 To 8
+                            If GetFontXY(ubFontCharacter, x, y) Then
+                                Asc(v, y) = Asc(v, y) + (2 ^ (x - 1))
+                            End If
+                        Next
+                    Next
+                    sFont(ubFontCharacter) = v
+                    DrawCharBitmap ubFontCharacter
+                End If
 
-            Case KB_CTRLC
-                sClipboard = sFont(ubFontCharacter)
+            Case KB_I
+                If KeyDown(KB_LCTRL) Or KeyDown(KB_RCTRL) Then
+                    ' Flag font changed
+                    bFontChanged = TRUE
 
-            Case KB_CTRLP
-                ' Flag font changed
-                bFontChanged = TRUE
+                    v = sFont(ubFontCharacter)
+                    For n = 1 To ubFontHeight
+                        Asc(sFont(ubFontCharacter), n) = 255 - Asc(v, n)
+                    Next
+                    DrawCharBitmap ubFontCharacter
+                End If
 
-                sFont(ubFontCharacter) = sClipboard
-                DrawCharBitmap ubFontCharacter
+            Case KB_C
+                If KeyDown(KB_LCTRL) Or KeyDown(KB_RCTRL) Then
+                    sClipboard = sFont(ubFontCharacter)
+                End If
+
+            Case KB_P
+                If KeyDown(KB_LCTRL) Or KeyDown(KB_RCTRL) Then
+                    ' Flag font changed
+                    bFontChanged = TRUE
+
+                    sFont(ubFontCharacter) = sClipboard
+                    DrawCharBitmap ubFontCharacter
+                End If
 
             Case KB_DELETE
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                sFont(ubFontCharacter) = String$(ubFontHeight, 0)
+                sFont(ubFontCharacter) = String$(ubFontHeight, NULL)
                 DrawCharBitmap ubFontCharacter
 
             Case KB_ESC
@@ -934,7 +934,7 @@ End Sub
 
 ' Shows the shadard windows message box
 Function MsgBox& (sMessage As String, sTitle As String, BoxType As Long)
-    MsgBox = MessageBoxA(WindowHandle, sMessage + Chr$(0), sTitle + Chr$(0), BoxType)
+    MsgBox = MessageBoxA(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), BoxType)
 End Function
 
 
@@ -947,28 +947,11 @@ Sub ShowAbortMsgBox (sMessage As String)
 End Sub
 
 
-' Get a 1 or 2 byte keycode from the keyboard buffer
-Function GetKey%
-    Dim k As String, i As Integer
-
-    k = InKey$
-    i = Len(k)
-
-    If i = 2 Then
-        GetKey = 256 + Asc(k, 2)
-    ElseIf i = 1 Then
-        GetKey = Asc(k)
-    Else
-        GetKey = KB_NONE
-    End If
-End Function
-
-
 ' Sleeps until the user presses a key on the keyboard
 Sub WaitKeyPress
     Do
         Sleep
-    Loop Until GetKey <> KB_NONE
+    Loop Until KeyHit <> NULL
 End Sub
 
 
@@ -1051,27 +1034,27 @@ End Function
 Function GetOpenFileName$ (sTitle As String, sInitialDir As String, sFilter As String, lFilterIndex As Long, llFlags As Integer64)
     ' Zero terminate the title
     Dim dTitle As String
-    dTitle = sTitle + Chr$(0)
+    dTitle = sTitle + Chr$(NULL)
 
     ' Zero terminate the initial directory
     Dim fInitialDir As String
-    fInitialDir = sInitialDir + Chr$(0)
+    fInitialDir = sInitialDir + Chr$(NULL)
 
     ' Replace the pipes with character zero and then zero terminate filter string
     Dim fFilter As String
-    fFilter = sFilter + Chr$(0)
+    fFilter = sFilter + Chr$(NULL)
     Dim r As Unsigned Long
     For r = 1 To Len(fFilter$)
-        If 124 = Asc(fFilter$, r) Then Asc(fFilter$, r) = 0
+        If 124 = Asc(fFilter$, r) Then Asc(fFilter$, r) = NULL
     Next
 
     ' Allocate space for returned file name
     Dim lpstrFile As String
-    lpstrFile = String$(2048, 0) ' For the returned file name
+    lpstrFile = String$(2048, NULL) ' For the returned file name
 
     ' Extension will not be added when this is not specified
     Dim lpstrDefExt As String
-    lpstrDefExt$ = String$(10, 0)
+    lpstrDefExt$ = String$(10, NULL)
 
     ' Needed for dialog call
     Dim OpenCall As FILEDIALOGTYPE
@@ -1094,7 +1077,7 @@ Function GetOpenFileName$ (sTitle As String, sInitialDir As String, sFilter As S
 
     If result Then
         ' Trim the remaining zeros
-        GetOpenFileName$ = Left$(lpstrFile, InStr(lpstrFile, Chr$(0)) - 1)
+        GetOpenFileName$ = Left$(lpstrFile, InStr(lpstrFile, Chr$(NULL)) - 1)
         llFlags = OpenCall.flags
         lFilterIndex = OpenCall.nFilterIndex
     End If
@@ -1112,27 +1095,27 @@ End Function
 Function GetSaveFileName$ (sTitle As String, sInitialDir As String, sFilter As String, lFilterIndex As Long, llFlags As Integer64)
     ' Zero terminate the title
     Dim dTitle As String
-    dTitle = sTitle + Chr$(0)
+    dTitle = sTitle + Chr$(NULL)
 
     ' Zero terminate the initial directory
     Dim fInitialDir As String
-    fInitialDir = sInitialDir + Chr$(0)
+    fInitialDir = sInitialDir + Chr$(NULL)
 
     ' Replace the pipes with character zero and then zero terminate filter string
     Dim fFilter As String
-    fFilter = sFilter + Chr$(0)
+    fFilter = sFilter + Chr$(NULL)
     Dim r As Unsigned Long
     For r = 1 To Len(fFilter$)
-        If 124 = Asc(fFilter$, r) Then Asc(fFilter$, r) = 0
+        If 124 = Asc(fFilter$, r) Then Asc(fFilter$, r) = NULL
     Next
 
     ' Allocate space for returned file name
     Dim lpstrFile As String
-    lpstrFile = String$(2048, 0) ' For the returned file name
+    lpstrFile = String$(2048, NULL) ' For the returned file name
 
     ' Extension will not be added when this is not specified
     Dim lpstrDefExt As String
-    lpstrDefExt$ = String$(10, 0)
+    lpstrDefExt$ = String$(10, NULL)
 
     Dim SaveCall As FILEDIALOGTYPE ' Needed for dialog call
     SaveCall.lStructSize = Len(SaveCall)
@@ -1154,7 +1137,7 @@ Function GetSaveFileName$ (sTitle As String, sInitialDir As String, sFilter As S
 
     If result Then
         ' Trim the remaining zeros
-        GetSaveFileName = Left$(lpstrFile, InStr(lpstrFile, Chr$(0)) - 1)
+        GetSaveFileName = Left$(lpstrFile, InStr(lpstrFile, Chr$(NULL)) - 1)
         llFlags = SaveCall.flags
         lFilterIndex = SaveCall.nFilterIndex
     End If
