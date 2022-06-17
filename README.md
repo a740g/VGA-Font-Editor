@@ -1,6 +1,6 @@
 # What is this?
 
-This is an editor and creator for VGA ROM fonts. This also has code for rendering text using a loaded font. The source code is written in QB64 and works natively without using any third party libraries.
+This is an editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries.
 
 ![Screenshot](Screenshot1.png)
 ![Screenshot](Screenshot2.png)
@@ -38,14 +38,18 @@ It's quite simple, 0 encodes background, 1 encodes foreground color. VGA fonts a
 
 The full bitmap contains bitmaps for every character, thus it's 256*16 bytes, 4096 bytes long (for 8x16 fonts). If you want to get the bitmap for a specific character, you have to multiply the ASCII code by 16 (number of rows in a character for 8x16 fonts).
 
-## What are these FNT files?
+## What are these PSF files?
 
-These fonts were created using the bin2fnt conversion tool from raw VGA ROM font dumps from various sources. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just 5 bytes for the header.
+These PSFs ([PC Screen Font](https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html)) were created using the bin2psf conversion tool from raw VGA ROM font dumps from various sources. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just a few bytes for the header.
 
 ```
                FONT FILE FORMAT
 +--------------------------------------------+
-| "FONT" (4 bytes)                           |
+| PSF1_MAGIC0 0x36 (1 byte)                  |
++--------------------------------------------+
+| PSF1_MAGIC1 0x04 (1 byte)                  |
++--------------------------------------------+
+| MODE (1 byte)                              |
 +--------------------------------------------+
 | FONT HEIGHT (1 byte)                       |
 +--------------------------------------------+
@@ -99,9 +103,9 @@ Anything you want! You may use the file format or sourcecode for embedded, retro
 
 | File | Function | Description |
 |------|----------|-------------|
-|**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | DrawCharacter() | QB64 - Draws a glyph  |
-|**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | DrawString() | QB64 - Draws a string of text |
-|**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | ReadFont() | QB64 - Loads a font file from disk |
-|**[editfont.bas](https://github.com/a740g/VGA-Font-Editor/blob/main/EDITFONT.BAS)** | WriteFont() | QB64 - Writes a font file to disk |
+|**[VGAFont.bas](include/VGAFont.bas)** | DrawCharacter() | QB64 - Draws a glyph  |
+|**[VGAFont.bas](include/VGAFont.bas)** | DrawString() | QB64 - Draws a string of text |
+|**[VGAFont.bas](include/VGAFont.bas)** | ReadFont() | QB64 - Loads a font file from disk |
+|**[VGAFont.bas](include/VGAFont.bas)** | WriteFont() | QB64 - Writes a font file to disk |
 |**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Font::Load() | C++ (DOS) - Loads a font file from disk |
 |**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Graphics::Print() | C++ (DOS) - Draws a string of text (multi-direction) |
