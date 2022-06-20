@@ -806,7 +806,7 @@ Function ShowPreview%%
 
     ' Draw a box on the screen
     Color 11, 1
-    DrawFancyBox 1, 1, 80, 30, " FONT  DEMO ", FALSE
+    DrawFancyBox 1, 1, 80, 30, " Preview ", FALSE
 
     ' Draw the body
     Color 15, 1

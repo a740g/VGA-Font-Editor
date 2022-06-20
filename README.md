@@ -4,6 +4,7 @@ This is an editor and library for VGA ROM fonts. This has code for rendering tex
 
 ![Screenshot](screenshots/Screenshot1.png)
 ![Screenshot](screenshots/Screenshot2.png)
+![Screenshot](screenshots/Screenshot3.png)
 
 ## What is a VGA ROM font?
 
@@ -17,7 +18,7 @@ These are fonts that are embedded in the VGA ROM BIOS. To learn more about VGA R
 
 It's quite simple, 0 encodes background, 1 encodes foreground color. VGA fonts are always 8 bits wide so that each byte contains exactly one row. For letter 'A' in the typical 8x16 font it would be (in binary):
 
-```
+```text
 00000000b  byte  0
 00000000b  byte  1
 00000000b  byte  2
