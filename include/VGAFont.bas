@@ -11,7 +11,6 @@
 
 $If VGAFONT_BAS = UNDEFINED Then
     $Let VGAFONT_BAS = TRUE
-
     '-----------------------------------------------------------------------------------------------------
     ' FUNCTIONS & SUBROUTINES
     '-----------------------------------------------------------------------------------------------------
@@ -22,8 +21,8 @@ $If VGAFONT_BAS = UNDEFINED Then
         Dim i As Long
 
         ' Change the global font height
-        VGAFont.glyphSize.y = nHeight
-        VGAFont.glyphSize.x = 8 ' Our width is always 8
+        FontSize.y = nHeight
+        FontSize.x = 8 ' Our width is always 8
 
         ' Now change the main font array height
         For i = 0 To 255
@@ -37,7 +36,7 @@ $If VGAFONT_BAS = UNDEFINED Then
         Dim i As Long
 
         For i = 0 To 255
-            FontData(i) = String$(VGAFont.glyphSize.y, NULL)
+            FontData(i) = String$(FontSize.y, NULL)
         Next
     End Sub
 
@@ -45,20 +44,23 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' Draws a single character at x, y
     ' Colors are picked up from the VGAFont
     Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
-        Dim As Long uy, p, r, t
+        Dim As Long uy, r, t, p, fc, bc
 
         ' Calculate right just once
-        r = x + VGAFont.glyphSize.x - 1
+        r = x + FontSize.x - 1
+
+        fc = DefaultColor
+        bc = BackgroundColor
 
         ' Go through the scan line one at a time
-        For uy = 1 To VGAFont.glyphSize.y
+        For uy = 1 To FontSize.y
             ' Get the scan line and pepare it
             p = Asc(FontData(nChar), uy)
             p = 256 * (p + (256 * (p > 127)))
             ' Draw the line
             t = y + uy - 1
-            Line (x, t)-(r, t), VGAFont.bgColor
-            Line (x, t)-(r, t), VGAFont.fgColor, , p
+            Line (x, t)-(r, t), bc
+            Line (x, t)-(r, t), fc, , p
         Next
     End Sub
 
@@ -66,26 +68,29 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' Draws a string at x, y
     ' Colors are picked up from the VGAFont
     Sub DrawString (sText As String, x As Long, y As Long)
-        Dim As Long uy, p, l, r, t, cidx
+        Dim As Long uy, l, r, t, p, cidx, fc, bc
         Dim ch As Unsigned Byte
+
+        fc = DefaultColor
+        bc = BackgroundColor
 
         ' We will iterate through the whole text
         For cidx = 1 To Len(sText)
             ' Find the character to draw
             ch = Asc(sText, cidx)
             ' Calculate the starting x position for this character
-            l = x + (cidx - 1) * VGAFont.glyphSize.x
+            l = x + (cidx - 1) * FontSize.x
             ' Calculate right
-            r = l + VGAFont.glyphSize.x - 1
+            r = l + FontSize.x - 1
             ' Next go through each scan line and draw those
-            For uy = 1 To VGAFont.glyphSize.y
+            For uy = 1 To FontSize.y
                 ' Get the scan line and prepare it
                 p = Asc(FontData(ch), uy)
                 p = 256 * (p + (256 * (p > 127)))
                 ' Draw the scan line
                 t = y + uy - 1
-                Line (l, t)-(r, t), VGAFont.bgColor
-                Line (l, t)-(r, t), VGAFont.fgColor, , p
+                Line (l, t)-(r, t), bc
+                Line (l, t)-(r, t), fc, , p
             Next
         Next
     End Sub
@@ -94,7 +99,7 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' Return the onsreen length of a string in pixels
     ' Just a convenience function
     Function GetDrawStringWidth& (sText As String)
-        GetDrawStringWidth = Len(sText) * VGAFont.glyphSize.x
+        GetDrawStringWidth = Len(sText) * FontSize.x
     End Function
 
 
@@ -143,10 +148,6 @@ $If VGAFONT_BAS = UNDEFINED Then
 
             Close hFile
 
-            ' Set default colors
-            VGAFont.fgColor = White
-            VGAFont.bgColor = Black
-
             ReadFont = TRUE
         End If
     End Function
@@ -158,7 +159,7 @@ $If VGAFONT_BAS = UNDEFINED Then
         ' Assume failure
         WriteFont = FALSE
 
-        If VGAFont.glyphSize.x > 0 And VGAFont.glyphSize.y > 0 Then
+        If FontSize.x > 0 And FontSize.y > 0 Then
             Dim As Long hFile
 
             ' Open the file for writing
@@ -176,7 +177,7 @@ $If VGAFONT_BAS = UNDEFINED Then
             Put hFile, , buffer
 
             ' Write font height
-            buffer = Chr$(VGAFont.glyphSize.y)
+            buffer = Chr$(FontSize.y)
             Put hFile, , buffer
 
             Dim i As Long

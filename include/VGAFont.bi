@@ -26,18 +26,12 @@ $If VGAFONT_BI = UNDEFINED Then
         x As Long
         y As Long
     End Type
-
-    Type VGAFontType
-        glyphSize As Vector2DType ' Width & height
-        fgColor As Unsigned Long ' Foreground color - RGBA or pallette index
-        bgColor As Unsigned Long ' Background color - RGBA or pallette index
-    End Type
     '-----------------------------------------------------------------------------------------------------
 
     '-----------------------------------------------------------------------------------------------------
     ' GLOBAL VARIABLES
     '-----------------------------------------------------------------------------------------------------
-    Dim Shared VGAFont As VGAFontType
+    Dim Shared FontSize As Vector2DType
     Dim Shared FontData(0 To 255) As String
     '-----------------------------------------------------------------------------------------------------
 

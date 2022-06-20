@@ -42,7 +42,7 @@ The full bitmap contains bitmaps for every character, thus it's 256*16 bytes, 40
 
 These PSFs ([PC Screen Font](https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html)) were created using the bin2psf conversion tool from raw VGA ROM font dumps from various sources. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just a few bytes for the header.
 
-```
+```text
                FONT FILE FORMAT
 +--------------------------------------------+
 | PSF1_MAGIC0 0x36 (1 byte)                  |
@@ -101,11 +101,11 @@ These PSFs ([PC Screen Font](https://www.win.tue.nl/~aeb/linux/kbd/font-formats-
 
 Anything you want! You may use the file format or sourcecode for embedded, retro, game projects and more. This does not require you to have DOS or any old PC hardware. All code here is written for modern hardware. The font file format is super simple and the text rendering code is straightforward and clean. With very little effort, the rendering code can be ported to your favorite programming language and library. There are many example fonts in the `fonts` directory. I honestly do not know the orginal souces of these and highly recommend you to create your own fonts using this tool for your projects.
 
-| File | Function | Description |
-|------|----------|-------------|
-|**[VGAFont.bas](include/VGAFont.bas)** | DrawCharacter() | QB64 - Draws a glyph  |
-|**[VGAFont.bas](include/VGAFont.bas)** | DrawString() | QB64 - Draws a string of text |
-|**[VGAFont.bas](include/VGAFont.bas)** | ReadFont() | QB64 - Loads a font file from disk |
-|**[VGAFont.bas](include/VGAFont.bas)** | WriteFont() | QB64 - Writes a font file to disk |
-|**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Font::Load() | C++ (DOS) - Loads a font file from disk |
-|**[graphics.cpp](https://github.com/a740g/gFrame/blob/master/GRAPHICS.CPP)** | Graphics::Print() | C++ (DOS) - Draws a string of text (multi-direction) |
+## API
+
+```VB
+Function ReadFont%% (sFile As String, ignoreMode As Byte)
+Function WriteFont%% (sFile As String)
+Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
+Sub DrawString (sText As String, x As Long, y As Long)
+~~~
