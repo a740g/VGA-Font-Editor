@@ -109,4 +109,4 @@ Function ReadFont%% (sFile As String, ignoreMode As Byte)
 Function WriteFont%% (sFile As String)
 Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
 Sub DrawString (sText As String, x As Long, y As Long)
-~~~
+```
