@@ -355,7 +355,7 @@ Function ChooseCharacter%%
 
     ' Show some info
     Color 11, 1
-    DrawFancyBox 43, 1, 80, 30, " Controls ", FALSE
+    DrawTextBox 43, 1, 80, 30, "Controls"
     Color , 1
     Locate 4, 47: Color 10: Print "Left Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move left";
     Locate 6, 47: Color 10: Print "Right Arrow";: Color 8: Print " ....... ";: Color 15: Print "Move right";
@@ -372,7 +372,7 @@ Function ChooseCharacter%%
 
     ' Draw the main character set area
     Color 15, 8
-    DrawFancyBox 1, 1, 42, 30, " Select a character to edit ", FALSE
+    DrawTextBox 1, 1, 42, 30, "Select a character to edit"
 
     Dim As Long x, y
 
@@ -485,7 +485,7 @@ Function EditCharacter%%
 
     ' Show some info
     Color 11, 1
-    DrawFancyBox 43, 1, 80, 30, " Controls ", FALSE
+    DrawTextBox 43, 1, 80, 30, "Controls"
     Color , 1
     Locate 4, 47: Color 10: Print "Left Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move left"
     Locate 5, 47: Color 10: Print "Right Arrow";: Color 8: Print " ....... ";: Color 15: Print "Move right"
@@ -514,7 +514,7 @@ Function EditCharacter%%
 
     ' Draw the main character set area
     Color 15, 8
-    DrawFancyBox 1, 1, 42, 30, Str$(ubFontCharacter) + ": " + Chr$(ubFontCharacter) + " ", FALSE
+    DrawTextBox 1, 1, 42, 30, Trim$(Str$(ubFontCharacter) + ": " + Chr$(ubFontCharacter))
     Locate 2, 27: Color 1, 14: Print "Demonstration:";
 
     Dim cpy As String
@@ -806,7 +806,7 @@ Function ShowPreview%%
 
     ' Draw a box on the screen
     Color 11, 1
-    DrawFancyBox 1, 1, 80, 30, " Preview ", FALSE
+    DrawTextBox 1, 1, 80, 30, "Preview"
 
     ' Draw the body
     Color 15, 1
@@ -930,45 +930,28 @@ Sub DrawDemo
 End Sub
 
 ' Draw a box using box drawing characters and optionally puts a caption
-Sub DrawFancyBox (l As Long, t As Long, r As Long, b As Long, sCaption As String, noBorders As Byte)
-    Dim i As Long, buffer As String
+Sub DrawTextBox (l As Long, t As Long, r As Long, b As Long, sCaption As String)
+    Dim As Long i, inBoxWidth
 
-    If noBorders Then
-        ' Calculate and create the border as string
-        buffer = String$(1 + r - l, 32)
+    ' Calculate the "internal" box width
+    inBoxWidth = r - l - 1
 
-        ' Draw the whole box from top to bottom
-        For i = t To b
-            Locate i, l: Print buffer;
-        Next
-    Else
-        ' Calculate and create the border as string
-        buffer = String$(r - l - 1, 196)
+    ' Draw the top line
+    Locate t, l: Print Chr$(218); String$(inBoxWidth, 196); Chr$(191);
 
-        ' Draw the top & bottom borders
-        Locate t, l + 1: Print buffer;
-        Locate b, l + 1: Print buffer;
+    ' Draw the sides
+    For i = t + 1 To b - 1
+        Locate i, l: Print Chr$(179); Space$(inBoxWidth); Chr$(179);
+    Next
 
-        ' Calculate and create the space in between the left & right edge
-        buffer = String$(r - l - 1, 32)
-
-        ' Draw the left border, right border & space in between
-        For i = t + 1 To b - 1
-            Locate i, l: Print Chr$(179); buffer; Chr$(179);
-        Next
-
-        ' Now draw the edges
-        Locate t, l: Print Chr$(218);
-        Locate t, r: Print Chr$(191);
-        Locate b, l: Print Chr$(192);
-        Locate b, r: Print Chr$(217);
-    End If
+    ' Draw the bottom line
+    Locate b, l: Print Chr$(192); String$(inBoxWidth, 196); Chr$(217);
 
     ' Set the caption if specified
     If sCaption <> NULLSTRING Then
         Color BackgroundColor, DefaultColor
-        Locate t, l + (1 + r - l) / 2 - Len(sCaption) / 2
-        Print sCaption;
+        Locate t, l + inBoxWidth \ 2 - Len(sCaption) \ 2
+        Print " "; sCaption; " ";
     End If
 End Sub
 
