@@ -916,6 +916,7 @@ Sub DrawCharBitmap (ch As Unsigned Byte)
 End Sub
 
 
+' This draws a grid of the same character for demo purpose on the edit screen
 Sub DrawDemo
     Dim As Long x, y
 
@@ -928,6 +929,7 @@ Sub DrawDemo
         Next
     Next
 End Sub
+
 
 ' Draw a box using box drawing characters and optionally puts a caption
 Sub DrawTextBox (l As Long, t As Long, r As Long, b As Long, sCaption As String)
@@ -952,6 +954,7 @@ Sub DrawTextBox (l As Long, t As Long, r As Long, b As Long, sCaption As String)
         Color BackgroundColor, DefaultColor
         Locate t, l + inBoxWidth \ 2 - Len(sCaption) \ 2
         Print " "; sCaption; " ";
+        Color BackgroundColor, DefaultColor
     End If
 End Sub
 
