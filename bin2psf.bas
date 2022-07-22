@@ -65,7 +65,7 @@ System
 
 Function ConvertBin2PSF& (sBinFileName As String, sPSFFileName As String)
     ' Assume failure
-    ConvertBin2PSF = NULL
+    ConvertBin2PSF = 0
 
     If FileExists(sBinFileName) And Not FileExists(sPSFFileName) Then
         ' Open the raw ROM font file
