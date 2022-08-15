@@ -42,8 +42,8 @@ $If VGAFONT_BAS = UNDEFINED Then
 
 
     ' Draws a single character at x, y
-    ' Colors are picked up from the VGAFont
     Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
+        $Checking:Off
         Dim As Long uy, r, t, p, fc, bc
 
         ' Calculate right just once
@@ -62,12 +62,13 @@ $If VGAFONT_BAS = UNDEFINED Then
             Line (x, t)-(r, t), bc
             Line (x, t)-(r, t), fc, , p
         Next
+        $Checking:On
     End Sub
 
 
     ' Draws a string at x, y
-    ' Colors are picked up from the VGAFont
     Sub DrawString (sText As String, x As Long, y As Long)
+        $Checking:Off
         Dim As Long uy, l, r, t, p, cidx, fc, bc
         Dim ch As Unsigned Byte
 
@@ -93,18 +94,20 @@ $If VGAFONT_BAS = UNDEFINED Then
                 Line (l, t)-(r, t), fc, , p
             Next
         Next
+        $Checking:On
     End Sub
 
 
     ' Return the onsreen length of a string in pixels
     ' Just a convenience function
     Function GetDrawStringWidth& (sText As String)
+        $Checking:Off
         GetDrawStringWidth = Len(sText) * FontSize.x
+        $Checking:On
     End Function
 
 
     ' Loads a font file from disk
-    ' This also sets the default foreground and background colors
     Function ReadFont%% (sFile As String, ignoreMode As Byte)
         ' Assume failure
         ReadFont = FALSE
