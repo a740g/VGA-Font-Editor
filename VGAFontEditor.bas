@@ -158,9 +158,15 @@ End Type
 '-----------------------------------------------------------------------------------------------------
 ' LIBRARY FUCTIONS
 '-----------------------------------------------------------------------------------------------------
-Declare Dynamic Library "user32"
-    Function MessageBoxA& (ByVal oHWnd As Offset, sMessage As String, sTitle As String, Byval ulMBType As Unsigned Long)
-End Declare
+$If WIN Then
+    Declare CustomType Library
+        Function MessageBox (ByVal hWnd As Offset, sMessage As String, sTitle As String, Byval nType As Unsigned Long)
+    End Declare
+$Else
+        Declare CustomType Library ""
+        Function MessageBox (ByVal hWnd As Offset, sMessage As String, sTitle As String, Byval nType As Unsigned Long)
+        End Declare
+$End If
 
 Declare Dynamic Library "comdlg32"
     Function GetOpenFileNameA& (DialogParams As FileDialogType)
@@ -1044,7 +1050,7 @@ End Sub
 
 ' Shows the shadard windows message box
 Function MsgBox& (sMessage As String, sTitle As String, BoxType As Long)
-    MsgBox = MessageBoxA(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), BoxType)
+    MsgBox = MessageBox(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), BoxType)
 End Function
 
 
