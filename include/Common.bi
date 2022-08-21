@@ -8,10 +8,6 @@ $If COMMON_BI = UNDEFINED Then
     '-----------------------------------------------------------------------------------------------------
     ' METACOMMANDS
     '-----------------------------------------------------------------------------------------------------
-    ' Compiler check
-    $If 32BIT Then
-            $ERROR This requires the 64-bit QB64 compiler!
-    $End If
     ' We don't want an underscore prefix as we are writing this from scratch. Leading underscores are ugly
     $NoPrefix
     ' All identifiers must default to long (32-bits). This results in fastest code execution on x86 & x64
