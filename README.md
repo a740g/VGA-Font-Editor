@@ -1,6 +1,6 @@
 # What is this?
 
-This is an editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries.
+This is an editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries.
 
 ![Screenshot](screenshots/Screenshot1.png)
 ![Screenshot](screenshots/Screenshot2.png)
