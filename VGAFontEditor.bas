@@ -717,8 +717,7 @@ Function EditCharacter%%
 
                 For y = 0 To FontSize.y - 1
                     sl = Asc(FontData(ubFontCharacter), y + 1)
-                    sl = SHL(sl, 1) Or SHR(sl, 7)
-                    Asc(FontData(ubFontCharacter), y + 1) = sl
+                    Asc(FontData(ubFontCharacter), y + 1) = RoL(sl, 1)
                 Next
 
                 DrawCharBitmap ubFontCharacter
@@ -730,8 +729,7 @@ Function EditCharacter%%
 
                 For y = 0 To FontSize.y - 1
                     sl = Asc(FontData(ubFontCharacter), y + 1)
-                    sl = SHR(sl, 1) Or SHL(sl, 7)
-                    Asc(FontData(ubFontCharacter), y + 1) = sl
+                    Asc(FontData(ubFontCharacter), y + 1) = RoR(sl, 1)
                 Next
 
                 DrawCharBitmap ubFontCharacter
