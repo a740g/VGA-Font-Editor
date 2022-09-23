@@ -155,6 +155,7 @@ $If VGAFONT_BAS = UNDEFINED Then
         End If
     End Function
 
+
     ' Saves the font file to disk in PSF v1 format
     ' This does not check if the file exists or whatever and will happily overwrite it
     ' It is the caller's resposibility to check this stuff

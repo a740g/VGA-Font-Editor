@@ -158,15 +158,9 @@ End Type
 '-----------------------------------------------------------------------------------------------------
 ' LIBRARY FUCTIONS
 '-----------------------------------------------------------------------------------------------------
-$If WIN Then
-    Declare CustomType Library
-        Function MessageBox (ByVal hWnd As Offset, sMessage As String, sTitle As String, Byval nType As Unsigned Long)
-    End Declare
-$Else
-        Declare CustomType Library ""
-        Function MessageBox (ByVal hWnd As Offset, sMessage As String, sTitle As String, Byval nType As Unsigned Long)
-        End Declare
-$End If
+Declare CustomType Library
+    Function MessageBox~& (ByVal ignore As Long, sMessage As String, sTitle As String, Byval nType As Unsigned Long)
+End Declare
 
 Declare Dynamic Library "comdlg32"
     Function GetOpenFileNameA& (DialogParams As FileDialogType)
@@ -232,7 +226,7 @@ Do
             End If
 
         Case Else
-            ShowCriticalMsgBox "Unhandled program event!"
+            MsgBoxCritical "Unhandled program event!"
             Exit Do
     End Select
 Loop
@@ -245,14 +239,12 @@ System
 '-----------------------------------------------------------------------------------------------------
 ' Handles and command line parameters
 Function DoCommandLine%%
-    Dim i As Long
-
     ' Default to the character choose event
     DoCommandLine = EVENT_CHOOSE
 
     ' Check if any help is needed
     If ArgVPresent("?", 1) Then
-        i = MsgBox(APP_NAME + Chr$(13) + "Syntax: EDITFONT [fontfile.psf]" + Chr$(13) + "    /?: Shows this message" + String$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" + String$(2, 13) + "https://github.com/a740g/", APP_NAME, MB_OK Or MB_ICONINFORMATION Or MB_SETFOCUS Or MB_APPLMODAL)
+        MsgBox APP_NAME + Chr$(13) + "Syntax: EDITFONT [fontfile.psf]" + Chr$(13) + "    /?: Shows this message" + String$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" + String$(2, 13) + "https://github.com/a740g/", APP_NAME
         DoCommandLine = EVENT_QUIT
         Exit Function ' Exit the function and allow the main loop to handle the quit event
     End If
@@ -270,7 +262,7 @@ Function DoCommandLine%%
                 Title APP_NAME + " - " + GetFileNameFromPath(sFontFile)
                 ResizeClipboard
             Else
-                ShowCriticalMsgBox "Failed to load " + sFontFile + "!"
+                MsgBoxCritical "Failed to load " + sFontFile + "!"
                 sFontFile = NULLSTRING
                 ' Trigger the load event if no file name was specified
                 DoCommandLine = EVENT_LOAD
@@ -311,7 +303,7 @@ Function LoadVGAFont%%
         ResizeClipboard
         bFontChanged = FALSE
     Else
-        ShowCriticalMsgBox "Failed to load " + tmpFilename + "!"
+        MsgBoxCritical "Failed to load " + tmpFilename + "!"
         LoadVGAFont = EVENT_LOAD
     End If
 End Function
@@ -344,7 +336,7 @@ Function SaveVGAFont%%
         sFontFile = tmpFilename
         bFontChanged = FALSE
     Else
-        ShowCriticalMsgBox "Failed to save " + tmpFilename + "!"
+        MsgBoxCritical "Failed to save " + tmpFilename + "!"
     End If
 End Function
 
@@ -1040,16 +1032,23 @@ End Function
 
 
 ' Critical message box. This does not terminate the program!
-Sub ShowCriticalMsgBox (sMessage As String)
-    Dim i As Long
-    i = MsgBox(sMessage, APP_NAME, MB_OK Or MB_ICONSTOP Or MB_SETFOCUS Or MB_APPLMODAL)
+Sub MsgBoxCritical (sMessage As String)
+    Dim ignore As Unsigned Long
+    ignore = MessageBox(WindowHandle, sMessage + Chr$(NULL), APP_NAME + Chr$(NULL), MB_OK Or MB_ICONSTOP Or MB_SETFOCUS Or MB_APPLMODAL)
 End Sub
 
 
-' Shows the shadard windows message box
+' Shows a message box based on type and returns what button was pressed
 Function MsgBox& (sMessage As String, sTitle As String, BoxType As Long)
     MsgBox = MessageBox(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), BoxType)
 End Function
+
+
+' Shows an information message box
+Sub MsgBox (sMessage As String, sTitle As String)
+    Dim ignore As Unsigned Long
+    ignore = MessageBox(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), MB_OK Or MB_ICONINFORMATION Or MB_APPLMODAL)
+End Sub
 
 
 '  sTitle       - The dialog title
