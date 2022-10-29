@@ -35,55 +35,6 @@ $VersionInfo:ProductVersion=4,0,0,0
 ' App name
 Const APP_NAME = "VGA Font Editor"
 
-'MessageBox Constant values as defined by Microsoft (MBType)
-Const MB_OK = 0 'OK button only
-Const MB_OKCANCEL = 1 'OK & Cancel
-Const MB_ABORTRETRYIGNORE = 2 'Abort, Retry & Ignore
-Const MB_YESNOCANCEL = 3 'Yes, No & Cancel
-Const MB_YESNO = 4 'Yes & No
-Const MB_RETRYCANCEL = 5 'Retry & Cancel
-Const MB_CANCELTRYCONTINUE = 6 'Cancel, Try Again & Continue
-Const MB_ICONSTOP = 16 'Error stop sign icon
-Const MB_ICONQUESTION = 32 'Question-mark icon
-Const MB_ICONEXCLAMATION = 48 'Exclamation-point icon
-Const MB_ICONINFORMATION = 64 'Letter i in a circle icon
-Const MB_DEFBUTTON1 = 0 '1st button default(left)
-Const MB_DEFBUTTON2 = 256 '2nd button default
-Const MB_DEFBUTTON3 = 512 '3rd button default(right)
-Const MB_APPLMODAL = 0 'Message box applies to application only
-Const MB_SYSTEMMODAL = 4096 'Message box on top of all other windows
-Const MB_SETFOCUS = 65536 'Set message box as focus
-
-' Return values from MessageBox
-Const ID_OK = 1 'OK button pressed
-Const ID_CANCEL = 2 'Cancel button pressed
-Const ID_ABORT = 3 'Abort button pressed
-Const ID_RETRY = 4 'Retry button pressed
-Const ID_IGNORE = 5 'Ignore button pressed
-Const ID_YES = 6 'Yes button pressed
-Const ID_NO = 7 'No button pressed
-Const ID_TRYAGAIN = 10 'Try again button pressed
-Const ID_CONTINUE = 1 'Continue button pressed
-
-' Dialog flag constants (use + or OR to use more than 1 flag value)
-Const OFN_ALLOWMULTISELECT = &H200 ' Allows the user to select more than one file, not recommended!
-Const OFN_CREATEPROMPT = &H2000 ' Prompts if a file not found should be created(GetOpenFileName only).
-Const OFN_EXTENSIONDIFFERENT = &H400 ' Allows user to specify file extension other than default extension.
-Const OFN_FILEMUSTEXIST = &H1000 ' Chechs File name exists(GetOpenFileName only).
-Const OFN_HIDEREADONLY = &H4 ' Hides read-only checkbox(GetOpenFileName only)
-Const OFN_NOCHANGEDIR = &H8 ' Restores the current directory to original value if user changed
-Const OFN_NODEREFERENCELINKS = &H100000 ' Returns path and file name of selected shortcut(.LNK) file instead of file referenced.
-Const OFN_NONETWORKBUTTON = &H20000 ' Hides and disables the Network button.
-Const OFN_NOREADONLYRETURN = &H8000 ' Prevents selection of read-only files, or files in read-only subdirectory.
-Const OFN_NOVALIDATE = &H100 ' Allows invalid file name characters.
-Const OFN_OVERWRITEPROMPT = &H2 ' Prompts if file already exists(GetSaveFileName only)
-Const OFN_PATHMUSTEXIST = &H800 ' Checks Path name exists (set with OFN_FILEMUSTEXIST).
-Const OFN_READONLY = &H1 ' Checks read-only checkbox. Returns if checkbox is checked
-Const OFN_SHAREAWARE = &H4000 ' Ignores sharing violations in networking
-Const OFN_SHOWHELP = &H10 ' Shows the help button (useless!)
-
-Const MAX_PATH = 4096 ' Max path name size
-
 ' Keyboard codes
 Const KB_ESC = 27
 Const KB_ENTER = 13
@@ -126,46 +77,6 @@ Const EVENT_CHOOSE = 3
 Const EVENT_EDIT = 4
 Const EVENT_PREVIEW = 5
 Const EVENT_COMMAND = 6
-'-----------------------------------------------------------------------------------------------------
-
-'-----------------------------------------------------------------------------------------------------
-' USER DEFINED TYPES
-'-----------------------------------------------------------------------------------------------------
-Type FileDialogType
-    lStructSize As Offset '      For the DLL call
-    hwndOwner As Offset '        Dialog will hide behind window when not set correctly
-    hInstance As Offset '        Handle to a module that contains a dialog box template.
-    lpstrFilter As Offset '      Pointer of the string of file filters
-    lpstrCustFilter As Long
-    nMaxCustFilter As Long
-    nFilterIndex As Integer64 '  One based starting filter index to use when dialog is called
-    lpstrFile As Offset '        String full of 0's for the selected file name
-    nMaxFile As Offset '         Maximum length of the string stuffed with 0's minus 1
-    lpstrFileTitle As Offset '   Same as lpstrFile
-    nMaxFileTitle As Offset '    Same as nMaxFile
-    lpstrInitialDir As Offset '  Starting directory
-    lpstrTitle As Offset '       Dialog title
-    flags As Integer64 '         Dialog flags
-    nFileOffset As Integer64 '   Zero-based offset from path beginning to file name string pointed to by lpstrFile
-    nFileExtension As Integer64 'Zero-based offset from path beginning to file extension string pointed to by lpstrFile.
-    lpstrDefExt As Offset '      Default/selected file extension
-    lCustData As Integer64
-    lpfnHook As Integer64
-    lpTemplateName As Offset
-End Type
-'-----------------------------------------------------------------------------------------------------
-
-'-----------------------------------------------------------------------------------------------------
-' LIBRARY FUCTIONS
-'-----------------------------------------------------------------------------------------------------
-Declare CustomType Library
-    Function MessageBox~& (ByVal ignore As Long, sMessage As String, sTitle As String, Byval nType As Unsigned Long)
-End Declare
-
-Declare Dynamic Library "comdlg32"
-    Function GetOpenFileNameA& (DialogParams As FileDialogType)
-    Function GetSaveFileNameA& (DialogParams As FileDialogType)
-End Declare
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
@@ -218,7 +129,7 @@ Do
                 Event = SaveVGAFont
 
                 ' Check the user really wants to quit
-                If MsgBox("Are you sure you want to quit?", APP_NAME, MB_YESNO Or MB_DEFBUTTON2 Or MB_APPLMODAL Or MB_SETFOCUS) = ID_YES Then
+                If MessageBox(APP_NAME, "Are you sure you want to quit?", "yesno", "question") = 1 Then
                     Exit Do
                 End If
             Else
@@ -226,7 +137,7 @@ Do
             End If
 
         Case Else
-            MsgBoxCritical "Unhandled program event!"
+            MessageBox APP_NAME, "Unhandled program event!", "error"
             Exit Do
     End Select
 Loop
@@ -244,7 +155,7 @@ Function DoCommandLine%%
 
     ' Check if any help is needed
     If ArgVPresent("?", 1) Then
-        MsgBox APP_NAME + Chr$(13) + "Syntax: EDITFONT [fontfile.psf]" + Chr$(13) + "    /?: Shows this message" + String$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" + String$(2, 13) + "https://github.com/a740g/", APP_NAME
+        MessageBox APP_NAME, APP_NAME + Chr$(13) + "Syntax: EDITFONT [fontfile.psf]" + Chr$(13) + "    /?: Shows this message" + String$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" + String$(2, 13) + "https://github.com/a740g/", "info"
         DoCommandLine = EVENT_QUIT
         Exit Function ' Exit the function and allow the main loop to handle the quit event
     End If
@@ -262,7 +173,7 @@ Function DoCommandLine%%
                 Title APP_NAME + " - " + GetFileNameFromPath(sFontFile)
                 ResizeClipboard
             Else
-                MsgBoxCritical "Failed to load " + sFontFile + "!"
+                MessageBox APP_NAME, "Failed to load " + sFontFile + "!", "error"
                 sFontFile = NULLSTRING
                 ' Trigger the load event if no file name was specified
                 DoCommandLine = EVENT_LOAD
@@ -271,8 +182,8 @@ Function DoCommandLine%%
             ' If this is a new file ask use for specs
             Dim ubFontHeight As Long
             Do
-                Print
-                Input ; "Enter new font height in pixels (8 - 32): ", ubFontHeight
+                ubFontHeight = Val(InputBox$(APP_NAME, "Enter new font height in pixels (8 - 32):", Str$(ubFontHeight)))
+                If ubFontHeight < 8 Or ubFontHeight > 32 Then MessageBox APP_NAME, "Enter a valid font height!", "error"
             Loop While ubFontHeight < 8 Or ubFontHeight > 32
             SetFontHeight ubFontHeight
         End If
@@ -288,7 +199,7 @@ Function LoadVGAFont%%
     LoadVGAFont = EVENT_CHOOSE
 
     ' Get an existing font file name from the user
-    tmpFilename = GetFileNameDialog(FALSE, NULLSTRING, NULLSTRING, "Font files (*.psf)|*.PSF|All files (*.*)|*.*", 1, OFN_FILEMUSTEXIST)
+    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", "", "*.psf", "Font files")
 
     ' Exit if user canceled
     If tmpFilename = NULLSTRING Then
@@ -303,7 +214,7 @@ Function LoadVGAFont%%
         ResizeClipboard
         bFontChanged = FALSE
     Else
-        MsgBoxCritical "Failed to load " + tmpFilename + "!"
+        MessageBox APP_NAME, "Failed to load " + tmpFilename + "!", "error"
         LoadVGAFont = EVENT_LOAD
     End If
 End Function
@@ -318,13 +229,13 @@ Function SaveVGAFont%%
 
     If sFontFile = NULLSTRING Then
         ' Get a font file name from the user
-        tmpFilename = GetFileNameDialog(TRUE, NULLSTRING, NULLSTRING, "Font files (*.psf)|*.PSF|All files (*.*)|*.*", 1, OFN_OVERWRITEPROMPT)
+        tmpFilename = SaveFileDialog$(APP_NAME + ": Save", "", "*.psf", "Font files")
 
         ' Exit if user canceled
         If tmpFilename = NULLSTRING Then Exit Function
     Else
         ' Ask the user if they want to overwrite the current file
-        If MsgBox("Font " + sFontFile + " has changed. Save it now?", APP_NAME, MB_YESNO Or MB_DEFBUTTON1 Or MB_APPLMODAL Or MB_SETFOCUS) = ID_YES Then
+        If MessageBox(APP_NAME, "Font " + sFontFile + " has changed. Save it now?", "yesno", "question") = 1 Then
             tmpFilename = sFontFile
         Else
             Exit Function
@@ -336,7 +247,7 @@ Function SaveVGAFont%%
         sFontFile = tmpFilename
         bFontChanged = FALSE
     Else
-        MsgBoxCritical "Failed to save " + tmpFilename + "!"
+        MessageBox APP_NAME, "Failed to save " + tmpFilename + "!", "error"
     End If
 End Function
 
@@ -1017,115 +928,6 @@ Function GetFileNameFromPath$ (pathName As String)
         GetFileNameFromPath = pathName
     Else
         GetFileNameFromPath = Right$(pathName, Len(pathName) - i)
-    End If
-End Function
-
-
-' Returns a BASIC string (bstring) from zero terminated C string (cstring)
-Function CStrToBStr$ (cStr As String)
-    Dim zeroPos As Long
-
-    CStrToBStr = cStr
-    zeroPos = InStr(cStr, Chr$(NULL))
-    If zeroPos > 0 Then CStrToBStr = Left$(cStr, zeroPos - 1)
-End Function
-
-
-' Critical message box. This does not terminate the program!
-Sub MsgBoxCritical (sMessage As String)
-    Dim ignore As Unsigned Long
-    ignore = MessageBox(WindowHandle, sMessage + Chr$(NULL), APP_NAME + Chr$(NULL), MB_OK Or MB_ICONSTOP Or MB_SETFOCUS Or MB_APPLMODAL)
-End Sub
-
-
-' Shows a message box based on type and returns what button was pressed
-Function MsgBox& (sMessage As String, sTitle As String, BoxType As Long)
-    MsgBox = MessageBox(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), BoxType)
-End Function
-
-
-' Shows an information message box
-Sub MsgBox (sMessage As String, sTitle As String)
-    Dim ignore As Unsigned Long
-    ignore = MessageBox(WindowHandle, sMessage + Chr$(NULL), sTitle + Chr$(NULL), MB_OK Or MB_ICONINFORMATION Or MB_APPLMODAL)
-End Sub
-
-
-'  sTitle       - The dialog title
-'  sInitialDir  - If this left blank, it will use the directory where the last opened file is located. Specify ".\" if you want to always use the current directory
-'  sFilter      - File filters separated by pipes (|) in the same format as VB6 common dialogs
-'  lFilterIndex - The initial file filter to use. Will be altered by user during the call
-'  llFlags      - Dialog flags. Will be altered by the user during the call
-'
-' Returns: Blank when cancel is clicked, otherwise the file name selected by the user
-' lFilterIndex and llFlags will be changed depending on the user's selections
-Function GetFileNameDialog$ (isSave As Byte, sTitle As String, sInitialDir As String, sFilter As String, lFilterIndex As Integer64, llFlags As Integer64)
-    Dim OSFN As FileDialogType
-
-    ' Set the struct size
-    OSFN.lStructSize = Len(OSFN)
-
-    ' Set the parent window
-    OSFN.hwndOwner = WindowHandle
-
-    ' Set the file filters
-    Dim fFilter As String
-    If sFilter <> NULLSTRING Then
-        fFilter = sFilter + Chr$(NULL)
-        ' Replace the pipes with character zero and then zero terminate filter string
-        Dim r As Unsigned Long
-        For r = 1 To Len(fFilter)
-            If 124 = Asc(fFilter, r) Then Asc(fFilter, r) = NULL
-        Next
-        OSFN.lpstrFilter = Offset(fFilter)
-    End If
-
-    ' Set the filter index
-    OSFN.nFilterIndex = lFilterIndex
-
-    ' Allocate space for returned file name
-    Dim lpstrFile As String
-    lpstrFile = String$(MAX_PATH, NULL)
-    OSFN.lpstrFile = Offset(lpstrFile)
-    OSFN.nMaxFile = Len(lpstrFile) - 1
-
-    OSFN.lpstrFileTitle = OSFN.lpstrFile
-    OSFN.nMaxFileTitle = OSFN.nMaxFile
-
-    ' Set the initial directory
-    Dim fInitialDir As String
-    If sInitialDir <> NULLSTRING Then
-        fInitialDir = sInitialDir + Chr$(NULL)
-        OSFN.lpstrInitialDir = Offset(fInitialDir)
-    End If
-
-    ' Zero terminate the title
-    Dim dTitle As String
-    If sTitle <> NULLSTRING Then
-        dTitle = sTitle + Chr$(NULL)
-        OSFN.lpstrTitle = Offset(dTitle)
-    End If
-
-    ' Extension will not be added when this is not specified
-    Dim lpstrDefExt As String
-    lpstrDefExt = String$(10, NULL)
-    OSFN.lpstrDefExt = Offset(lpstrDefExt)
-
-    OSFN.flags = llFlags
-
-    ' Call the dialog fuction
-    Dim result As Long
-    If isSave Then
-        result = GetSaveFileNameA(OSFN)
-    Else
-        result = GetOpenFileNameA(OSFN)
-    End If
-
-    If result Then
-        ' Trim the remaining zeros
-        GetFileNameDialog = CStrToBStr(lpstrFile)
-        llFlags = OSFN.flags
-        lFilterIndex = OSFN.nFilterIndex
     End If
 End Function
 '-----------------------------------------------------------------------------------------------------

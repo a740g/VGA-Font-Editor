@@ -113,4 +113,4 @@ Sub DrawString (sText As String, x As Long, y As Long)
 
 ## Important note
 
-This uses new features introduced in [QB64-PE v3.1.0+](https://github.com/QB64-Phoenix-Edition/QB64pe/releases) and as such may not work correctly or reliably with older versions of QB64-PE or any version of QB64. You've been warned. Please don't nag me about backwards compatiblity.
+This uses new features introduced in [QB64-PE v3.4+](https://github.com/QB64-Phoenix-Edition/QB64pe/releases) and as such may not work correctly or reliably with older versions of QB64-PE or any version of QB64. You've been warned. Please don't nag me about backwards compatiblity.
