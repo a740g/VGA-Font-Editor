@@ -1,6 +1,6 @@
 # What is this?
 
-This is an editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries.
+This is a cross-platform editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries.
 
 ![Screenshot](screenshots/Screenshot1.png)
 ![Screenshot](screenshots/Screenshot2.png)
@@ -113,4 +113,4 @@ Sub DrawString (sText As String, x As Long, y As Long)
 
 ## Important note
 
-This uses new features introduced in [QB64-PE v3.4+](https://github.com/QB64-Phoenix-Edition/QB64pe/releases) and as such may not work correctly or reliably with older versions of QB64-PE or any version of QB64. You've been warned. Please don't nag me about backwards compatiblity.
+The editor uses new features introduced in [QB64-PE v3.4+](https://github.com/QB64-Phoenix-Edition/QB64pe/releases) and as such may not work correctly or reliably with older versions of QB64-PE or any version of QB64. You've been warned. Please don't nag me about backwards compatiblity.
