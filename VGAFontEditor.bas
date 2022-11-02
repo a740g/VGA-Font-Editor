@@ -199,7 +199,7 @@ Function LoadVGAFont%%
     LoadVGAFont = EVENT_CHOOSE
 
     ' Get an existing font file name from the user
-    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", "", "*.psf", "Font files")
+    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", "", "*.psf|*.PSF|*.Psf", "Font files")
 
     ' Exit if user canceled
     If tmpFilename = NULLSTRING Then
@@ -229,7 +229,7 @@ Function SaveVGAFont%%
 
     If sFontFile = NULLSTRING Then
         ' Get a font file name from the user
-        tmpFilename = SaveFileDialog$(APP_NAME + ": Save", "", "*.psf", "Font files")
+        tmpFilename = SaveFileDialog$(APP_NAME + ": Save", "", "*.psf|*.PSF|*.Psf", "Font files")
 
         ' Exit if user canceled
         If tmpFilename = NULLSTRING Then Exit Function
