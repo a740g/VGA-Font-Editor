@@ -35,48 +35,16 @@ $VersionInfo:ProductVersion=4,0,0,0
 ' App name
 Const APP_NAME = "VGA Font Editor"
 
-' Keyboard codes
-Const KB_ESC = 27
-Const KB_ENTER = 13
-Const KB_SPACE = 32
-Const KB_DELETE = 21248
-Const KB_INSERT = 20992
-Const KB_HOME = 18176
-Const KB_END = 20224
-Const KB_PAGEUP = 18688
-Const KB_PAGEDOWN = 20736
-Const KB_F1 = 15104
-Const KB_F5 = 16128
-Const KB_F9 = 17152
-Const KB_UP = 18432
-Const KB_DOWN = 20480
-Const KB_LEFT = 19200
-Const KB_RIGHT = 19712
-Const KB_XL = 120
-Const KB_XU = 88
-Const KB_CL = 99
-Const KB_CU = 67
-Const KB_PL = 112
-Const KB_PU = 80
-Const KB_HL = 104
-Const KB_HU = 72
-Const KB_VL = 118
-Const KB_VU = 86
-Const KB_IL = 105
-Const KB_IU = 73
-Const KB_WL = 119
-Const KB_WU = 87
-Const KB_AL = 97
-Const KB_AU = 65
-
 ' Program events
-Const EVENT_QUIT = 0
-Const EVENT_SAVE = 1
-Const EVENT_LOAD = 2
-Const EVENT_CHOOSE = 3
-Const EVENT_EDIT = 4
-Const EVENT_PREVIEW = 5
-Const EVENT_COMMAND = 6
+Const EVENT_NONE = 0
+Const EVENT_QUIT = 1
+Const EVENT_COMMAND = 2
+Const EVENT_NEW = 3
+Const EVENT_LOAD = 4
+Const EVENT_CHOOSE = 5
+Const EVENT_EDIT = 6
+Const EVENT_PREVIEW = 7
+Const EVENT_SAVE = 8
 '-----------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------
@@ -97,36 +65,39 @@ Screen 12 ' Change to graphics mode
 Title APP_NAME ' Set app title
 AllowFullScreen SquarePixels , Smooth ' Allow the program window to run fullscreen with Alt+Enter
 
-Dim Event As Byte
+Dim event As Byte
 
 ' Default's to command line event on program entry
-Event = EVENT_COMMAND
+event = EVENT_COMMAND
 
 ' Event loop
 Do
-    Select Case Event
+    Select Case event
         Case EVENT_COMMAND
-            Event = DoCommandLine
+            event = DoCommandLine
+
+        Case EVENT_NEW
+            event = DoNewFont
 
         Case EVENT_LOAD
-            Event = LoadVGAFont
+            event = DoLoadFont
 
         Case EVENT_SAVE
-            Event = SaveVGAFont
+            event = DoSaveFont
 
         Case EVENT_CHOOSE
-            Event = ChooseCharacter
+            event = DoChooseCharacter
 
         Case EVENT_EDIT
-            Event = EditCharacter
+            event = DoEditCharacter
 
         Case EVENT_PREVIEW
-            Event = ShowPreview
+            event = DoShowPreview
 
         Case EVENT_QUIT
             If bFontChanged Then
                 ' Attempt to save the changes
-                Event = SaveVGAFont
+                event = DoSaveFont
 
                 ' Check the user really wants to quit
                 If MessageBox(APP_NAME, "Are you sure you want to quit?", "yesno", "question") = 1 Then
@@ -137,8 +108,7 @@ Do
             End If
 
         Case Else
-            MessageBox APP_NAME, "Unhandled program event!", "error"
-            Exit Do
+            event = DoWelcomeScreen
     End Select
 Loop
 
@@ -148,13 +118,123 @@ System
 '-----------------------------------------------------------------------------------------------------
 ' FUNCTIONS AND SUBROUTINES
 '-----------------------------------------------------------------------------------------------------
+Function DoWelcomeScreen%%
+    Shared FontSize As Vector2DType
+    Static As Single starX(1 To 1024), starY(1 To 1024)
+    Static As Long starZ(1 To 1024), starC(1 To 1024)
+    Static As Long i, e, k
+
+    PrintMode KeepBackground
+    Display
+
+    Do
+        Cls , 0 ' clear the page
+
+        For i = 1 To 1024
+            If starX(i) < 1 Or starX(i) >= Width Or starY(i) < 1 Or starY(i) >= Height Then
+                starX(i) = RandomBetween(0, Width - 1)
+                starY(i) = RandomBetween(0, Height - 1)
+                starZ(i) = 4096
+                starC(i) = RandomBetween(1, 15)
+            End If
+
+            PSet (starX(i), starY(i)), starC(i)
+
+            starZ(i) = starZ(i) + 1
+            starX(i) = ((starX(i) - (Width / 2)) * (starZ(i) / 4096)) + (Width / 2)
+            starY(i) = ((starY(i) - (Height / 2)) * (starZ(i) / 4096)) + (Height / 2)
+        Next
+
+        Color 15, 0
+        Locate 2, 2: Print "       _   _   __  __    ___ __  __  _ _____   ___ __  _ _____ __  ___        "
+        Locate 3, 2: Print "      | \ / | / _]/  \  | __/__\|  \| |_   _| | __| _\| |_   _/__\| _ \       "
+        Locate 4, 2: Print "      `\ V /'| [/\ /\ | | _| \/ | | ' | | |   | _|| v | | | || \/ | v /       "
+        Locate 5, 2: Print "        \_/   \__/_||_| |_| \__/|_|\__| |_|   |___|__/|_| |_| \__/|_|_\       "
+        Locate 8, 2: Print "   ,,     '#,:$, ,#.     ,,,    ,,,       ,,,       ,.###:.       ,,       ,, "
+        Locate 9, 2: Print " .#  #;    :#  '#  #;  .#'  `,  $#  `   .#'  `         ,;#'     ,#'      ,#'  "
+        Locate 10, 2: Print " #'  '#    $#      '#  ##,,.'    '''.   ##.          ,#'       ,#'      ,#'   "
+        Locate 11, 2: Print " '#,,$#,. ,:'     ,#'  '#:.,'   `:##'   '#:.,'      ,#$#;:'`   #$'`#,   #$'#; "
+        Locate 12, 2: Print "                         ,,                      `#,           #:  '#   $. ,# "
+        Locate 13, 2: Print "     ,,                   `   ÞßßßßßßßßßßßßßßßßÝ   ##.        ,#'   ', ,:###' "
+        Locate 14, 2: Print "   ,#'     '#.   '#.      $   Þ F1........LOAD Ý,#'##''`                      "
+        Locate 15, 2: Print "  ,#'  ,'   ##,   #:      #,  Þ F2.........NEW Ý    ##$                       "
+        Locate 16, 2: Print "  #$#;`     '#:,,##      ,#:  Þ ENTER...CHOOSE Ý    :#'                       "
+        Locate 17, 2: Print "  #: '#         #;'      ##'  Þ ESC.......QUIT Ý   ,'     .   *   ..  . *  *  "
+        Locate 18, 2: Print " ,#'   ',  ,   ;#'  .   ##'   ÞÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÝ        *  * @()Ooc()*   o  . "
+        Locate 19, 2: Print "    ,,,     `'''`    ````          ,    .           ,,      (Q@*0CG*O()  ___  "
+        Locate 20, 2: Print "  .#'  `,              ,,         #:   .#         ,#'      |\_________/|/ _ \ "
+        Locate 21, 2: Print "  ##.  ,#   '#,:#$#.    '#,       '#  .##.       ,#'  ,'   |  |  |  |  | / | |"
+        Locate 22, 2: Print "  '#:.,#:     :#   '#    '#,       `##' '#.      #$#;`     |  |  |  |  | | | |"
+        Locate 23, 2: Print "      ##'     $#       ;#'$#       ,,,,          #: '#     |  |  |  |  | | | |"
+        Locate 24, 2: Print " .   ##'         ,###. #, .$      .#'   `,      ,#'   ',   |  |  |  |  | | | |"
+        Locate 25, 2: Print "  ````          ,#'  ` '###:,     ##,   #:                 |  |  |  |  | | | |"
+        Locate 26, 2: Print " `#.  .#'     -,#'-      $,   #,  '#:,,##     $,    ,   #, |  |  |  |  | \_| |"
+        Locate 27, 2: Print "  '$##$'       :#         #,  ,$       ;#      #,  ,$,  ,$ |  |  |  |  |\___/ "
+        Locate 28, 2: Print "  .#$$#,       $#          #,,#'        '#  ,   #,,#'#,,#; |\_|__|__|_/|      "
+        Locate 29, 2: Print "  #'  '#.     ,:'           ;'            `'     ;'    ;'   \_________/       ";
+
+        Limit 60
+        Display
+
+        k = KeyHit
+
+        Select Case k
+            Case KEY_F1
+                e = EVENT_LOAD
+
+            Case KEY_F2
+                e = EVENT_NEW
+
+            Case KEY_ENTER
+                If FontSize.y > 0 Then e = EVENT_CHOOSE
+
+            Case KEY_ESCAPE
+                e = EVENT_QUIT
+
+            Case Else
+                e = EVENT_NONE
+        End Select
+    Loop While e = EVENT_NONE
+
+    AutoDisplay
+    PrintMode FillBackground
+
+    DoWelcomeScreen = e
+End Function
+
+
+' Creates an empty font file
+Function DoNewFont%%
+    Shared FontSize As Vector2DType
+    Dim ubFontHeight As Long
+
+    ' Attempt to save the font if there is one
+    DoNewFont = DoSaveFont
+
+    ubFontHeight = Val(InputBox$(APP_NAME, "Enter new font height in pixels (8 - 32):", Str$(ubFontHeight)))
+
+    If ubFontHeight < 8 Or ubFontHeight > 32 Then
+        MessageBox APP_NAME, "Enter a valid font height!", "error"
+
+        If FontSize.y <= 0 Then DoNewFont = EVENT_NONE
+        Exit Function
+    End If
+
+    sFontFile = NULLSTRING
+    Title APP_NAME + " - UNTITLED"
+    SetFontHeight ubFontHeight
+    ResizeClipboard
+    bFontChanged = TRUE
+End Function
+
+
 ' Handles and command line parameters
 Function DoCommandLine%%
-    ' Default to the character choose event
-    DoCommandLine = EVENT_CHOOSE
+    ' Default to no event
+    DoCommandLine = EVENT_NONE
 
     ' Check if any help is needed
-    If ArgVPresent("?", 1) Then
+    If Command$(1) = "/?" Or Command$(1) = "-?" Then
         MessageBox APP_NAME, APP_NAME + Chr$(13) + "Syntax: EDITFONT [fontfile.psf]" + Chr$(13) + "    /?: Shows this message" + String$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" + String$(2, 13) + "https://github.com/a740g/", "info"
         DoCommandLine = EVENT_QUIT
         Exit Function ' Exit the function and allow the main loop to handle the quit event
@@ -163,10 +243,7 @@ Function DoCommandLine%%
     ' Fetch the file name from the command line
     sFontFile = Command$(1)
 
-    If sFontFile = NULLSTRING Then
-        ' Trigger the load event if no file name was specified
-        DoCommandLine = EVENT_LOAD
-    Else
+    If sFontFile <> NULLSTRING Then
         If FileExists(sFontFile) Then
             ' Read in the font
             If ReadFont(sFontFile, TRUE) Then
@@ -175,35 +252,29 @@ Function DoCommandLine%%
             Else
                 MessageBox APP_NAME, "Failed to load " + sFontFile + "!", "error"
                 sFontFile = NULLSTRING
-                ' Trigger the load event if no file name was specified
-                DoCommandLine = EVENT_LOAD
             End If
         Else
             ' If this is a new file ask use for specs
-            Dim ubFontHeight As Long
-            Do
-                ubFontHeight = Val(InputBox$(APP_NAME, "Enter new font height in pixels (8 - 32):", Str$(ubFontHeight)))
-                If ubFontHeight < 8 Or ubFontHeight > 32 Then MessageBox APP_NAME, "Enter a valid font height!", "error"
-            Loop While ubFontHeight < 8 Or ubFontHeight > 32
-            SetFontHeight ubFontHeight
+            DoCommandLine = DoNewFont
         End If
     End If
 End Function
 
 
-' This is called when a font has to loaded
-Function LoadVGAFont%%
+' This is called when a font has to be loaded
+Function DoLoadFont%%
+    Shared FontSize As Vector2DType
     Dim tmpFilename As String
 
-    ' Default to the character choose event
-    LoadVGAFont = EVENT_CHOOSE
+    ' Attempt to save the font if there is one
+    DoLoadFont = DoSaveFont
 
     ' Get an existing font file name from the user
-    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", "", "*.psf|*.PSF|*.Psf", "Font files")
+    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", "", "*.psf|*.PSF|*.Psf", "PC Screen Font files")
 
     ' Exit if user canceled
     If tmpFilename = NULLSTRING Then
-        If FontSize.y <= 0 Then LoadVGAFont = EVENT_QUIT ' Exit if 1st time
+        If FontSize.y <= 0 Then DoLoadFont = EVENT_NONE ' Do nothing if no font file is loaded
         Exit Function
     End If
 
@@ -215,45 +286,46 @@ Function LoadVGAFont%%
         bFontChanged = FALSE
     Else
         MessageBox APP_NAME, "Failed to load " + tmpFilename + "!", "error"
-        LoadVGAFont = EVENT_LOAD
+        DoLoadFont = EVENT_NONE
     End If
 End Function
 
 
 ' This is called when the file should be saved
-Function SaveVGAFont%%
-    Dim tmpFilename As String
+Function DoSaveFont%%
+    ' Default to the character choose event
+    DoSaveFont = EVENT_CHOOSE
 
-    ' Default to the charcter choose event
-    SaveVGAFont = EVENT_CHOOSE
+    ' Only attempt to save if the font has changed
+    If bFontChanged Then
+        If sFontFile = NULLSTRING Then
+            Dim tmpFilename As String
 
-    If sFontFile = NULLSTRING Then
-        ' Get a font file name from the user
-        tmpFilename = SaveFileDialog$(APP_NAME + ": Save", "", "*.psf|*.PSF|*.Psf", "Font files")
+            ' Get a font file name from the user
+            tmpFilename = SaveFileDialog$(APP_NAME + ": Save", "", "*.psf|*.PSF|*.Psf", "Font files")
 
-        ' Exit if user canceled
-        If tmpFilename = NULLSTRING Then Exit Function
-    Else
-        ' Ask the user if they want to overwrite the current file
-        If MessageBox(APP_NAME, "Font " + sFontFile + " has changed. Save it now?", "yesno", "question") = 1 Then
-            tmpFilename = sFontFile
+            ' Exit if user canceled
+            If tmpFilename = NULLSTRING Then Exit Function
+
+            sFontFile = tmpFilename ' set the font filename
         Else
-            Exit Function
+            ' Ask the user if they want to overwrite the current file
+            If MessageBox(APP_NAME, "Font " + sFontFile + " has changed. Save it now?", "yesno", "question") = 0 Then Exit Function
         End If
-    End If
 
-    ' Save the font
-    If WriteFont(tmpFilename) Then
-        sFontFile = tmpFilename
-        bFontChanged = FALSE
-    Else
-        MessageBox APP_NAME, "Failed to save " + tmpFilename + "!", "error"
+        ' Save the font
+        If WriteFont(sFontFile) Then
+            bFontChanged = FALSE ' clear the font changed flag now
+        Else
+            MessageBox APP_NAME, "Failed to save " + sFontFile + "!", "error"
+        End If
     End If
 End Function
 
 
 ' This is the character selector routine
-Function ChooseCharacter%%
+Function DoChooseCharacter%%
+    Shared FontSize As Vector2DType
     Static xp As Long, yp As Long
     Dim refTime As Single, blinkState As Byte
 
@@ -266,18 +338,19 @@ Function ChooseCharacter%%
     Color 11, 1
     DrawTextBox 43, 1, 80, 30, "Controls"
     Color , 1
-    Locate 4, 47: Color 10: Print "Left Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move left";
-    Locate 6, 47: Color 10: Print "Right Arrow";: Color 8: Print " ....... ";: Color 15: Print "Move right";
-    Locate 8, 47: Color 10: Print "Up Arrow";: Color 8: Print " ............. ";: Color 15: Print "Move up";
-    Locate 10, 47: Color 10: Print "Down Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move down";
-    Locate 12, 47: Color 10: Print "Mouse Pointer";: Color 8: Print " ......... ";: Color 15: Print "Select";
-    Locate 14, 47: Color 10: Print "Left Button";: Color 8: Print " ... ";: Color 15: Print "Edit character";
-    Locate 16, 47: Color 10: Print "Right Button";: Color 8: Print " .. ";: Color 15: Print "Edit character";
-    Locate 18, 47: Color 10: Print "Enter";: Color 8: Print " ......... ";: Color 15: Print "Edit character";
-    Locate 20, 47: Color 10: Print "F1";: Color 8: Print " ................. ";: Color 15: Print "Load font";
-    Locate 22, 47: Color 10: Print "F9";: Color 8: Print " ................. ";: Color 15: Print "Save font";
-    Locate 24, 47: Color 10: Print "F5";: Color 8: Print " .............. ";: Color 15: Print "Show preview";
-    Locate 26, 47: Color 10: Print "Escape";: Color 8: Print " .................. ";: Color 15: Print "Quit";
+    Locate 3, 47: Color 10: Print "Left Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move left";
+    Locate 5, 47: Color 10: Print "Right Arrow";: Color 8: Print " ....... ";: Color 15: Print "Move right";
+    Locate 7, 47: Color 10: Print "Up Arrow";: Color 8: Print " ............. ";: Color 15: Print "Move up";
+    Locate 9, 47: Color 10: Print "Down Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move down";
+    Locate 11, 47: Color 10: Print "Mouse Pointer";: Color 8: Print " ......... ";: Color 15: Print "Select";
+    Locate 13, 47: Color 10: Print "Left Button";: Color 8: Print " ... ";: Color 15: Print "Edit character";
+    Locate 15, 47: Color 10: Print "Right Button";: Color 8: Print " .. ";: Color 15: Print "Edit character";
+    Locate 17, 47: Color 10: Print "Enter";: Color 8: Print " ......... ";: Color 15: Print "Edit character";
+    Locate 19, 47: Color 10: Print "F1";: Color 8: Print " ................. ";: Color 15: Print "Load font";
+    Locate 21, 47: Color 10: Print "F2";: Color 8: Print " .................. ";: Color 15: Print "New font";
+    Locate 23, 47: Color 10: Print "F9";: Color 8: Print " ................. ";: Color 15: Print "Save font";
+    Locate 25, 47: Color 10: Print "F5";: Color 8: Print " .............. ";: Color 15: Print "Show preview";
+    Locate 27, 47: Color 10: Print "Escape";: Color 8: Print " ............. ";: Color 15: Print "Main menu";
 
     ' Draw the main character set area
     Color 15, 8
@@ -310,7 +383,7 @@ Function ChooseCharacter%%
                 ' Also check for mouse click
                 If MouseButton(1) Or MouseButton(2) Then
                     ubFontCharacter = 32 * yp + xp
-                    ChooseCharacter = EVENT_EDIT
+                    DoChooseCharacter = EVENT_EDIT
                     Exit Do
                 End If
             End If
@@ -321,49 +394,56 @@ Function ChooseCharacter%%
         in = KeyHit
 
         Select Case in
-            Case KB_LEFT
+            Case KEY_LEFT_ARROW
                 DrawCharSelector xp, yp, 8
                 xp = xp - 1
                 If xp < 0 Then xp = 31
                 DrawCharSelector xp, yp, 15
 
-            Case KB_RIGHT
+            Case KEY_RIGHT_ARROW
                 DrawCharSelector xp, yp, 8
                 xp = xp + 1
                 If xp > 31 Then xp = 0
                 DrawCharSelector xp, yp, 15
 
-            Case KB_UP
+            Case KEY_UP_ARROW
                 DrawCharSelector xp, yp, 8
                 yp = yp - 1
                 If yp < 0 Then yp = 7
                 DrawCharSelector xp, yp, 15
 
-            Case KB_DOWN
+            Case KEY_DOWN_ARROW
                 DrawCharSelector xp, yp, 8
                 yp = yp + 1
                 If yp > 7 Then yp = 0
                 DrawCharSelector xp, yp, 15
 
-            Case KB_ENTER
+            Case KEY_ENTER
                 ubFontCharacter = 32 * yp + xp
-                ChooseCharacter = EVENT_EDIT
+                DoChooseCharacter = EVENT_EDIT
                 Exit Do
 
-            Case KB_F9
-                ChooseCharacter = EVENT_SAVE
+            Case KEY_F9
+                DoChooseCharacter = EVENT_SAVE
                 Exit Do
 
-            Case KB_F1
-                ChooseCharacter = EVENT_LOAD
+            Case KEY_F1
+                DoChooseCharacter = EVENT_LOAD
                 Exit Do
 
-            Case KB_F5
-                ChooseCharacter = EVENT_PREVIEW
+            Case KEY_F2
+                DoChooseCharacter = EVENT_NEW
                 Exit Do
 
-            Case KB_ESC
-                ChooseCharacter = EVENT_QUIT
+            Case KEY_F5
+                DoChooseCharacter = EVENT_PREVIEW
+                Exit Do
+
+            Case KEY_ESCAPE
+                Dim e As Byte
+
+                e = DoSaveFont
+                DoChooseCharacter = EVENT_NONE
                 Exit Do
 
             Case Else
@@ -384,7 +464,9 @@ End Function
 
 
 ' This is font bitmap editor routine
-Function EditCharacter%%
+Function DoEditCharacter%%
+    Shared FontSize As Vector2DType
+    Shared FontData() As String
     Dim refTime As Single, blinkState As Byte
 
     ' Save the current time
@@ -476,31 +558,31 @@ Function EditCharacter%%
         in = KeyHit
 
         Select Case in
-            Case KB_LEFT ' Move left
+            Case KEY_LEFT_ARROW ' Move left
                 DrawCellSelector xp, yp, 8
                 xp = xp - 1
                 If xp < 0 Then xp = FontSize.x - 1
                 DrawCellSelector xp, yp, 15
 
-            Case KB_RIGHT ' Move right
+            Case KEY_RIGHT_ARROW ' Move right
                 DrawCellSelector xp, yp, 8
                 xp = xp + 1
                 If xp >= FontSize.x Then xp = 0
                 DrawCellSelector xp, yp, 15
 
-            Case KB_UP ' Move up
+            Case KEY_UP_ARROW ' Move up
                 DrawCellSelector xp, yp, 8
                 yp = yp - 1
                 If yp < 0 Then yp = FontSize.y - 1
                 DrawCellSelector xp, yp, 15
 
-            Case KB_DOWN ' Move down
+            Case KEY_DOWN_ARROW ' Move down
                 DrawCellSelector xp, yp, 8
                 yp = yp + 1
                 If yp >= FontSize.y Then yp = 0
                 DrawCellSelector xp, yp, 15
 
-            Case KB_SPACE ' Toggle pixel
+            Case KEY_SPACE_BAR ' Toggle pixel
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -509,7 +591,7 @@ Function EditCharacter%%
                 DrawCharBit ubFontCharacter, xp, yp
                 DrawDemo
 
-            Case KB_DELETE ' Clear bitmap
+            Case KEY_DELETE ' Clear bitmap
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -518,7 +600,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_INSERT ' Fill bitmap
+            Case KEY_INSERT ' Fill bitmap
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -527,7 +609,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_XL, KB_XU ' Cut
+            Case KEY_LOWER_X, KEY_UPPER_X ' Cut
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -537,10 +619,10 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_CL, KB_CU ' Copy
+            Case KEY_LOWER_C, KEY_UPPER_C ' Copy
                 sClipboard = FontData(ubFontCharacter)
 
-            Case KB_PL, KB_PU ' Paste
+            Case KEY_LOWER_P, KEY_UPPER_P ' Paste
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -549,7 +631,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_HL, KB_HU ' Horizontal flip
+            Case KEY_LOWER_H, KEY_UPPER_H ' Horizontal flip
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -568,7 +650,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_VL, KB_VU ' Vertical flip
+            Case KEY_LOWER_V, KEY_UPPER_V ' Vertical flip
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -581,7 +663,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_IL, KB_IU ' Invert
+            Case KEY_LOWER_I, KEY_UPPER_I ' Invert
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -594,7 +676,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_AL, KB_AU ' Horizontal line
+            Case KEY_LOWER_A, KEY_UPPER_A ' Horizontal line
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -603,7 +685,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_WL, KB_WU ' Vertical line
+            Case KEY_LOWER_L, KEY_UPPER_U ' Vertical line
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -614,7 +696,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_HOME ' Slide left
+            Case KEY_HOME ' Slide left
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -626,7 +708,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_END ' Slide right
+            Case KEY_END ' Slide right
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -638,7 +720,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_PAGEUP ' Slide up
+            Case KEY_PAGE_UP ' Slide up
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -657,7 +739,7 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_PAGEDOWN ' Slide down
+            Case KEY_PAGE_DOWN ' Slide down
                 ' Flag font changed
                 bFontChanged = TRUE
 
@@ -676,15 +758,15 @@ Function EditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KB_ENTER ' Save & return
-                EditCharacter = EVENT_CHOOSE
+            Case KEY_ENTER ' Save & return
+                DoEditCharacter = EVENT_CHOOSE
 
                 Exit Do
 
-            Case KB_ESC ' Cancel & return
+            Case KEY_ESCAPE ' Cancel & return
                 FontData(ubFontCharacter) = cpy
 
-                EditCharacter = EVENT_CHOOSE
+                DoEditCharacter = EVENT_CHOOSE
 
                 Exit Do
 
@@ -706,7 +788,9 @@ End Function
 
 
 ' Draws a preview screen using the loaded font
-Function ShowPreview%%
+Function DoShowPreview%%
+    Shared FontSize As Vector2DType
+
     Cls
 
     ClearInput
@@ -733,12 +817,14 @@ Function ShowPreview%%
 
     WaitInput
 
-    ShowPreview = EVENT_CHOOSE
+    DoShowPreview = EVENT_CHOOSE
 End Function
 
 
 ' Resizes the clipboard to match the font height
 Sub ResizeClipboard
+    Shared FontSize As Vector2DType
+
     sClipboard = Left$(sClipboard + String$(FontSize.y, NULL), FontSize.y)
 End Sub
 
@@ -747,6 +833,7 @@ End Sub
 ' Updates mxp & myp with position
 ' This is used by the character chooser
 Function GetMouseOverCharPosiion%% (mxp As Long, myp As Long)
+    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     GetMouseOverCharPosiion = FALSE
@@ -766,6 +853,8 @@ End Function
 
 ' Draw the character selector using color c at xp, yp
 Sub DrawCharSelector (xp As Long, yp As Long, c As Unsigned Long)
+    Shared FontSize As Vector2DType
+
     Line (8 + xp * (FontSize.x + 2), 31 + yp * (FontSize.y + 2))-(9 + FontSize.x + xp * (FontSize.x + 2), 32 + FontSize.y + yp * (FontSize.y + 2)), c, B
 End Sub
 
@@ -774,6 +863,7 @@ End Sub
 ' Updates mxp & myp with position
 ' This is used by the bitmap editor
 Function GetMouseOverCellPosition%% (mxp As Long, myp As Long)
+    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     GetMouseOverCellPosition = FALSE
@@ -799,6 +889,8 @@ End Sub
 
 ' This draws a single character pixel block
 Sub DrawCharBit (ch As Unsigned Byte, x As Long, y As Long)
+    Shared FontSize As Vector2DType
+    Shared FontData() As String
     Dim As Long xp, yp
 
     xp = 9 + x * 14
@@ -813,6 +905,7 @@ End Sub
 
 ' Draw the character bitmap for editing
 Sub DrawCharBitmap (ch As Unsigned Byte)
+    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     For y = 0 To FontSize.y - 1
@@ -825,6 +918,7 @@ End Sub
 
 ' This draws a grid of the same character for demo purpose on the edit screen
 Sub DrawDemo
+    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     Color 15, 0
@@ -891,29 +985,6 @@ Sub ClearInput
 End Sub
 
 
-' Check if an argument is present in the command line
-Function ArgVPresent%% (argv As String, start As Long)
-    Dim argc As Long
-    Dim As String a, b
-
-    argc = start
-    b = UCase$(argv)
-    Do
-        a = UCase$(Command$(argc))
-        If Len(a) = 0 Then Exit Do
-
-        If a = "/" + b Or a = "-" + b Then
-            ArgVPresent = TRUE
-            Exit Function
-        End If
-
-        argc = argc + 1
-    Loop
-
-    ArgVPresent = FALSE
-End Function
-
-
 ' Gets the filename portion from a file path
 Function GetFileNameFromPath$ (pathName As String)
     Dim i As Unsigned Long
@@ -929,6 +1000,11 @@ Function GetFileNameFromPath$ (pathName As String)
     Else
         GetFileNameFromPath = Right$(pathName, Len(pathName) - i)
     End If
+End Function
+
+' Generates a random number between lo & hi
+Function RandomBetween& (lo As Long, hi As Long)
+    RandomBetween = lo + Rnd * (hi - lo)
 End Function
 '-----------------------------------------------------------------------------------------------------
 

@@ -18,6 +18,8 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' This can be used by an editor
     ' This will crop the font if a font is loaded!
     Sub SetFontHeight (nHeight As Unsigned Byte)
+        Shared FontSize As Vector2DType
+        Shared FontData() As String
         Dim i As Long
 
         ' Change the global font height
@@ -33,6 +35,8 @@ $If VGAFONT_BAS = UNDEFINED Then
 
     ' This will clear the font glyphs
     Sub ResetFont
+        Shared FontSize As Vector2DType
+        Shared FontData() As String
         Dim i As Long
 
         For i = 0 To 255
@@ -44,6 +48,8 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' Draws a single character at x, y
     Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
         $Checking:Off
+        Shared FontSize As Vector2DType
+        Shared FontData() As String
         Dim As Long uy, r, t, p, fc, bc
 
         ' Calculate right just once
@@ -69,6 +75,8 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' Draws a string at x, y
     Sub DrawString (sText As String, x As Long, y As Long)
         $Checking:Off
+        Shared FontSize As Vector2DType
+        Shared FontData() As String
         Dim As Long uy, l, r, t, p, cidx, fc, bc
         Dim ch As Unsigned Byte
 
@@ -102,6 +110,8 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' Just a convenience function
     Function GetDrawStringWidth& (sText As String)
         $Checking:Off
+        Shared FontSize As Vector2DType
+
         GetDrawStringWidth = Len(sText) * FontSize.x
         $Checking:On
     End Function
@@ -109,6 +119,8 @@ $If VGAFONT_BAS = UNDEFINED Then
 
     ' Loads a font file from disk
     Function ReadFont%% (sFile As String, ignoreMode As Byte)
+        Shared FontData() As String
+
         ' Assume failure
         ReadFont = FALSE
 
@@ -160,6 +172,9 @@ $If VGAFONT_BAS = UNDEFINED Then
     ' This does not check if the file exists or whatever and will happily overwrite it
     ' It is the caller's resposibility to check this stuff
     Function WriteFont%% (sFile As String)
+        Shared FontSize As Vector2DType
+        Shared FontData() As String
+
         ' Assume failure
         WriteFont = FALSE
 

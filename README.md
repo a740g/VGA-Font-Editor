@@ -5,6 +5,7 @@ This is a cross-platform editor and library for VGA ROM fonts. This has code for
 ![Screenshot](screenshots/Screenshot1.png)
 ![Screenshot](screenshots/Screenshot2.png)
 ![Screenshot](screenshots/Screenshot3.png)
+![Screenshot](screenshots/Screenshot4.png)
 
 ## What is a VGA ROM font?
 
