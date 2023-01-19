@@ -1,6 +1,6 @@
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' Common header
-' Copyright (c) 2022 Samuel Gomes
+' Copyright (c) 2023 Samuel Gomes
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 $If COMMON_BI = UNDEFINED Then
@@ -9,23 +9,27 @@ $If COMMON_BI = UNDEFINED Then
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
     ' METACOMMANDS
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
+    $If VERSION < 3.5 Then
+            $Error This requires the latest version of QB64-PE from https://github.com/QB64-Phoenix-Edition/QB64pe/releases
+    $End If
+
     ' We don't want an underscore prefix when writing new code. Leading underscores are ugly
     $NoPrefix
 
     ' All identifiers must default to long (32-bits). This results in fastest code execution on x86 & x64
     DefLng A-Z
 
-    ' Force all variables to be defined
-    Option Explicit
-
     ' Force all arrays to be defined
     Option ExplicitArray
 
-    ' Start array lower bound from 1. If 0 is required this should be explicitly specified as (0 To X)
-    Option Base 1
+    ' Force all variables to be defined
+    Option Explicit
 
     ' All arrays should be static. If dynamic arrays are required use "ReDim"
     '$Static
+
+    ' Start array lower bound from 1. If 0 is required this should be explicitly specified as (0 To X)
+    Option Base 1
 
     ' We want our window to be resizeable. "Smooth" is a personal preference. Use "Stretch" if preferred
     $Resize:Smooth
@@ -140,6 +144,17 @@ $If COMMON_BI = UNDEFINED Then
     Const KEY_UPPER_X = 88
     Const KEY_UPPER_Y = 89
     Const KEY_UPPER_Z = 90
+    Const KEY_OPEN_BRACKET = 91
+    Const KEY_CLOSE_BRACKET = 93
+    Const KEY_OPEN_BRACE = 123
+    Const KEY_CLOSE_BRACE = 125
+    Const KEY_OPEN_PARENTHESIS = 40
+    Const KEY_CLOSE_PARENTHESIS = 41
+    Const KEY_SEMICOLON = 59
+    Const KEY_COLON = 58
+    ' QB64 errors that we can throw if something bad happens
+    Const ERROR_INVALID_HANDLE = 258
+    Const ERROR_FEATURE_UNAVAILABLE = 73
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
 $End If
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
