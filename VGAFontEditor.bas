@@ -1,40 +1,37 @@
-'-----------------------------------------------------------------------------------------------------
-'
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' VGA font editor
-' Copyright (c) 1998-2022, Samuel Gomes
-' Compiles with QB64 for Windows
-'
-'-----------------------------------------------------------------------------------------------------
+' Copyright (c) 2023 Samuel Gomes
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' HEADER FILES
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'$Include:'./include/Base64.bi'
+'$Include:'./include/ANSIPrint.bi'
 '$Include:'./include/VGAFont.bi'
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' METACOMMANDS
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 $ExeIcon:'.\VGAFontEditor.ico'
-$VersionInfo:CompanyName='Samuel Gomes'
-$VersionInfo:FileDescription='VGA Font Editor executable'
-$VersionInfo:InternalName='VGAFontEditor'
-$VersionInfo:LegalCopyright='Copyright (c) 1998-2022, Samuel Gomes'
-$VersionInfo:LegalTrademarks='All trademarks are property of their respective owners'
-$VersionInfo:OriginalFilename='VGAFontEditor.exe'
-$VersionInfo:ProductName='VGA Font Editor'
-$VersionInfo:Web='https://github.com/a740g'
-$VersionInfo:Comments='https://github.com/a740g'
-$VersionInfo:FILEVERSION#=4,0,0,0
+$VersionInfo:CompanyName=Samuel Gomes
+$VersionInfo:FileDescription=VGA Font Editor executable
+$VersionInfo:InternalName=VGAFontEditor
+$VersionInfo:LegalCopyright=Copyright (c) 2023 Samuel Gomes
+$VersionInfo:LegalTrademarks=All trademarks are property of their respective owners
+$VersionInfo:OriginalFilename=VGAFontEditor.exe
+$VersionInfo:ProductName=VGA Font Editor
+$VersionInfo:Web=https://github.com/a740g
+$VersionInfo:Comments=https://github.com/a740g
+$VersionInfo:FILEVERSION#=4,1,0,0
 $VersionInfo:ProductVersion=4,0,0,0
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' CONSTANTS
-'-----------------------------------------------------------------------------------------------------
-' App name
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 Const APP_NAME = "VGA Font Editor"
-
 ' Program events
 Const EVENT_NONE = 0
 Const EVENT_QUIT = 1
@@ -45,30 +42,30 @@ Const EVENT_CHOOSE = 5
 Const EVENT_EDIT = 6
 Const EVENT_PREVIEW = 7
 Const EVENT_SAVE = 8
-'-----------------------------------------------------------------------------------------------------
+' Screen properties
+Const SCREEN_WIDTH = 640
+Const SCREEN_HEIGHT = 480
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' GLOBAL VARIABLES
-'-----------------------------------------------------------------------------------------------------
-Dim Shared sFontFile As String ' The name of the font file we are viewing / editing
-Dim Shared ubFontCharacter As Unsigned Byte ' The glyph we are editing
-Dim Shared bFontChanged As Byte ' Has the font changed
-Dim Shared sClipboard As String ' The is the clipboard
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Dim Shared sFontFile As String ' the name of the font file we are viewing / editing
+Dim Shared ubFontCharacter As Unsigned Byte ' the glyph we are editing
+Dim Shared bFontChanged As Byte ' has the font changed?
+Dim Shared sClipboard As String ' our clipboard that holds a single glyph
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' PROGRAM ENTRY POINT
-'-----------------------------------------------------------------------------------------------------
-ChDir StartDir$ ' Change to the directory specifed by the environment
-ControlChr Off ' Turn off control characters
-Screen 12 ' Change to graphics mode
-Title APP_NAME ' Set app title
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChDir StartDir$ ' change to the directory specifed by the environment
+ControlChr Off ' turn off control characters
+Screen NewImage(SCREEN_WIDTH, SCREEN_HEIGHT, 32) ' switch to graphics mode
+Title APP_NAME + " " + OS$ ' set app title
 AllowFullScreen SquarePixels , Smooth ' Allow the program window to run fullscreen with Alt+Enter
 
-Dim event As Byte
-
-' Default's to command line event on program entry
-event = EVENT_COMMAND
+Dim event As Byte: event = EVENT_COMMAND ' default's to command line event on program entry
 
 ' Event loop
 Do
@@ -113,65 +110,74 @@ Do
 Loop
 
 System
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' FUNCTIONS AND SUBROUTINES
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 Function DoWelcomeScreen%%
-    Shared FontSize As Vector2DType
-    Static As Single starX(1 To 1024), starY(1 To 1024)
-    Static As Long starZ(1 To 1024), starC(1 To 1024)
-    Static As Long i, e, k
+    ' Save the current destination
+    Dim As Long oldDest: oldDest = Dest
 
-    PrintMode KeepBackground
-    Display
+    ' Now create a new image
+    Dim As Long img: img = NewImage(80 * 8, 31 * 16, 32) ' we'll allocate some extra height to avoid any scrolling
+
+    ' Change destination and render the ANSI art
+    Dest img
+    Restore Data_vga_font_editor_logo_3_ans_3737
+    Dim As String buffer: buffer = LoadResource
+    PrintANSI buffer, 0
+
+    ' Capture rendered image to another image
+    Dim As Long imgANSI: imgANSI = NewImage(80 * 8, 30 * 16, 32)
+    PutImage (0, 0), img, imgANSI ' any excess height will simply get clipped
+    ClearColor Black, imgANSI ' set all black pixels to be transparent
+
+    ' Render the menu
+    Cls , Black
+    Color , Black
+    Color Lime: Print "F1";: Color Gray: Print " ............";: Color Yellow: Print " LOAD"
+    Color Lime: Print "F2";: Color Gray: Print " .............";: Color Yellow: Print " NEW"
+    Color Lime: Print "ENTER";: Color Gray: Print " .......";: Color Yellow: Print " CHOOSE"
+    Color Lime: Print "ESC";: Color Gray: Print " ...........";: Color Yellow: Print " QUIT"
+
+    ' Capture the rendered image
+    Dim As Long imgMenu: imgMenu = NewImage(20 * 8, 4 * 16, 32)
+    PutImage (0, 0), img, imgMenu ' all excess stuff will get clipped
+    ClearColor Black, imgMenu ' set all black pixels to be transparent
+
+    ' Do some cleanup
+    Dest oldDest
+    FreeImage img
+
+    Shared FontSize As Vector2DType ' needed to check if a font is loaded
+
+    Const STAR_COUNT = 1024 ' the maximum stars that we can show
+    Dim As Single starX(1 To STAR_COUNT), starY(1 To STAR_COUNT), starZ(1 To STAR_COUNT)
+    Dim As Unsigned Long starC(1 To STAR_COUNT)
+    Dim As Long i, k
+    Dim As Byte e
 
     Do
-        Cls , 0 ' clear the page
+        Cls , Black ' clear the page
 
-        For i = 1 To 1024
+        For i = 1 To STAR_COUNT
             If starX(i) < 1 Or starX(i) >= Width Or starY(i) < 1 Or starY(i) >= Height Then
                 starX(i) = RandomBetween(0, Width - 1)
                 starY(i) = RandomBetween(0, Height - 1)
                 starZ(i) = 4096
-                starC(i) = RandomBetween(1, 15)
+                starC(i) = RGB32(RandomBetween(64, 255), RandomBetween(64, 255), RandomBetween(64, 255))
             End If
 
             PSet (starX(i), starY(i)), starC(i)
 
-            starZ(i) = starZ(i) + 1
+            starZ(i) = starZ(i) + 0.25
             starX(i) = ((starX(i) - (Width / 2)) * (starZ(i) / 4096)) + (Width / 2)
             starY(i) = ((starY(i) - (Height / 2)) * (starZ(i) / 4096)) + (Height / 2)
         Next
 
-        Color 15, 0
-        Locate 2, 2: Print "       _   _   __  __    ___ __  __  _ _____   ___ __  _ _____ __  ___        "
-        Locate 3, 2: Print "      | \ / | / _]/  \  | __/__\|  \| |_   _| | __| _\| |_   _/__\| _ \       "
-        Locate 4, 2: Print "      `\ V /'| [/\ /\ | | _| \/ | | ' | | |   | _|| v | | | || \/ | v /       "
-        Locate 5, 2: Print "        \_/   \__/_||_| |_| \__/|_|\__| |_|   |___|__/|_| |_| \__/|_|_\       "
-        Locate 8, 2: Print "   ,,     '#,:$, ,#.     ,,,    ,,,       ,,,       ,.###:.       ,,       ,, "
-        Locate 9, 2: Print " .#  #;    :#  '#  #;  .#'  `,  $#  `   .#'  `         ,;#'     ,#'      ,#'  "
-        Locate 10, 2: Print " #'  '#    $#      '#  ##,,.'    '''.   ##.          ,#'       ,#'      ,#'   "
-        Locate 11, 2: Print " '#,,$#,. ,:'     ,#'  '#:.,'   `:##'   '#:.,'      ,#$#;:'`   #$'`#,   #$'#; "
-        Locate 12, 2: Print "                         ,,                      `#,           #:  '#   $. ,# "
-        Locate 13, 2: Print "     ,,                   `   ﬁﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ›   ##.        ,#'   ', ,:###' "
-        Locate 14, 2: Print "   ,#'     '#.   '#.      $   ﬁ F1........LOAD ›,#'##''`                      "
-        Locate 15, 2: Print "  ,#'  ,'   ##,   #:      #,  ﬁ F2.........NEW ›    ##$                       "
-        Locate 16, 2: Print "  #$#;`     '#:,,##      ,#:  ﬁ ENTER...CHOOSE ›    :#'                       "
-        Locate 17, 2: Print "  #: '#         #;'      ##'  ﬁ ESC.......QUIT ›   ,'     .   *   ..  . *  *  "
-        Locate 18, 2: Print " ,#'   ',  ,   ;#'  .   ##'   ﬁ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹›        *  * @()Ooc()*   o  . "
-        Locate 19, 2: Print "    ,,,     `'''`    ````          ,    .           ,,      (Q@*0CG*O()  ___  "
-        Locate 20, 2: Print "  .#'  `,              ,,         #:   .#         ,#'      |\_________/|/ _ \ "
-        Locate 21, 2: Print "  ##.  ,#   '#,:#$#.    '#,       '#  .##.       ,#'  ,'   |  |  |  |  | / | |"
-        Locate 22, 2: Print "  '#:.,#:     :#   '#    '#,       `##' '#.      #$#;`     |  |  |  |  | | | |"
-        Locate 23, 2: Print "      ##'     $#       ;#'$#       ,,,,          #: '#     |  |  |  |  | | | |"
-        Locate 24, 2: Print " .   ##'         ,###. #, .$      .#'   `,      ,#'   ',   |  |  |  |  | | | |"
-        Locate 25, 2: Print "  ````          ,#'  ` '###:,     ##,   #:                 |  |  |  |  | | | |"
-        Locate 26, 2: Print " `#.  .#'     -,#'-      $,   #,  '#:,,##     $,    ,   #, |  |  |  |  | \_| |"
-        Locate 27, 2: Print "  '$##$'       :#         #,  ,$       ;#      #,  ,$,  ,$ |  |  |  |  |\___/ "
-        Locate 28, 2: Print "  .#$$#,       $#          #,,#'        '#  ,   #,,#'#,,#; |\_|__|__|_/|      "
-        Locate 29, 2: Print "  #'  '#.     ,:'           ;'            `'     ;'    ;'   \_________/       ";
+        PutImage (0, 0), imgANSI
+        PutImage (SCREEN_WIDTH \ 2 - Width(imgMenu) \ 2, SCREEN_HEIGHT \ 2 - Height(imgMenu) \ 2), imgMenu
 
         Limit 60
         Display
@@ -197,9 +203,29 @@ Function DoWelcomeScreen%%
     Loop While e = EVENT_NONE
 
     AutoDisplay
-    PrintMode FillBackground
+
+    ' Do some cleanup
+    FreeImage imgMenu
+    FreeImage imgANSI
 
     DoWelcomeScreen = e
+
+    Data_vga_font_editor_logo_3_ans_3737:
+    Data 3737,1064,-1
+    Data eJyVV91t4zAMfi/QCfKi28Cpk/Yho2SAAgd4N0fr0LZWOYmk+CPZMU4BKomkyI9/knt5DtPnR7BjvjzH
+    Data 4XH7mWJe/DxuwxT+Z/THnX7Lvj7GPEcAuDzFSiFnNiA1n4ZMW/IqS0IdyFhUKSC/cGIsqk4woJFJDpEZ
+    Data D6HlMgRwg2CYg/5kPfv5YUXEyXGctiwwqqsr8joiVAKpSzgaIuvVs3K8WkeTX1ONNSNw22vH3THS0XaR
+    Data 7MPznoHfssQOCtjxgBL63gshlLBcfZx7ElSKg6xja/hefmW/96AXrGfx5k1uCIUNHmPYw+hFoBB8/RdN
+    Data XRO32FvfUPHwsKAOKqRNxqFPzL9jMu428h2B8N19bzY+3cvMx2y9B1Unvnhtazh1TxJ25E2e7ta3vPgm
+    Data KIH+Yingwl4YQpTZK2qNNJDOUPCR72kTi6tBgtdGGXkOm8VFYhiSAzQUkWPjebo5KMZn465d+rsUWh3H
+    Data kZFQvLOPpFEisfLlobnna3LBwfVTRVhg42DVwK2NxG36/fuHTFo0zVujiRn0Zq5QysFhSk0sKh+ZbFlO
+    Data EHUTuZ3nxZos7fA1cTNgC9TdWiWTFzEp2TRvnLH1yJy4mNXcpNliLxedAD8geydEkBiHhs9GeZTn+dJ/
+    Data 6dSx8DfHooPvEnzKeXO0lg1+C1w1S6jRPm1s4swb/IiAmOrACLFys6LHpjedEya2B/yLziVOL/KSY72F
+    Data RIpJngzThWRCdXUB4QrWAEHcAwowm1KLrfEK7X0ikrOrH4gxvrL2Jf+ylRhSDyBHqUQ2YHmndJ4OJURY
+    Data 0pIJdNT5ymIOldlYK67YXIQxW0lTNIXKtJJlieVht5IYUUNhSmgShTX7S20HOktXHZi8zCGTTJrmNss+
+    Data zyGEpqxU9CAIZDsCoSvZiJiTF3/SVw1BXq4QeRXn2lBsBDtF2yPOvaGKYzF9Cfwe53yGQEvKLGhgIdkN
+    Data F40a00KFtG9Uy940UpBOKrsFI99AAC5q7uq+Z41H9uaKr1d1H2+/18s7Dnqu7uU9Tj72kfFgZQP/kBTl
+    Data cTRjr5G6DnozIv+79A8QGpjU
 End Function
 
 
@@ -332,34 +358,34 @@ Function DoChooseCharacter%%
     ' Save the current time
     refTime = Timer
 
-    Cls
+    Cls , Black
 
     ' Show some info
-    Color 11, 1
+    Color Aqua, Navy
     DrawTextBox 43, 1, 80, 30, "Controls"
-    Color , 1
-    Locate 3, 47: Color 10: Print "Left Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move left";
-    Locate 5, 47: Color 10: Print "Right Arrow";: Color 8: Print " ....... ";: Color 15: Print "Move right";
-    Locate 7, 47: Color 10: Print "Up Arrow";: Color 8: Print " ............. ";: Color 15: Print "Move up";
-    Locate 9, 47: Color 10: Print "Down Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move down";
-    Locate 11, 47: Color 10: Print "Mouse Pointer";: Color 8: Print " ......... ";: Color 15: Print "Select";
-    Locate 13, 47: Color 10: Print "Left Button";: Color 8: Print " ... ";: Color 15: Print "Edit character";
-    Locate 15, 47: Color 10: Print "Right Button";: Color 8: Print " .. ";: Color 15: Print "Edit character";
-    Locate 17, 47: Color 10: Print "Enter";: Color 8: Print " ......... ";: Color 15: Print "Edit character";
-    Locate 19, 47: Color 10: Print "F1";: Color 8: Print " ................. ";: Color 15: Print "Load font";
-    Locate 21, 47: Color 10: Print "F2";: Color 8: Print " .................. ";: Color 15: Print "New font";
-    Locate 23, 47: Color 10: Print "F9";: Color 8: Print " ................. ";: Color 15: Print "Save font";
-    Locate 25, 47: Color 10: Print "F5";: Color 8: Print " .............. ";: Color 15: Print "Show preview";
-    Locate 27, 47: Color 10: Print "Escape";: Color 8: Print " ............. ";: Color 15: Print "Main menu";
+    Color , Navy
+    Locate 3, 47: Color Lime: Print "Left Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move left";
+    Locate 5, 47: Color Lime: Print "Right Arrow";: Color Gray: Print " ....... ";: Color White: Print "Move right";
+    Locate 7, 47: Color Lime: Print "Up Arrow";: Color Gray: Print " ............. ";: Color White: Print "Move up";
+    Locate 9, 47: Color Lime: Print "Down Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move down";
+    Locate 11, 47: Color Lime: Print "Mouse Pointer";: Color Gray: Print " ......... ";: Color White: Print "Select";
+    Locate 13, 47: Color Lime: Print "Left Button";: Color Gray: Print " ... ";: Color White: Print "Edit character";
+    Locate 15, 47: Color Lime: Print "Right Button";: Color Gray: Print " .. ";: Color White: Print "Edit character";
+    Locate 17, 47: Color Lime: Print "Enter";: Color Gray: Print " ......... ";: Color White: Print "Edit character";
+    Locate 19, 47: Color Lime: Print "F1";: Color Gray: Print " ................. ";: Color White: Print "Load font";
+    Locate 21, 47: Color Lime: Print "F2";: Color Gray: Print " .................. ";: Color White: Print "New font";
+    Locate 23, 47: Color Lime: Print "F9";: Color Gray: Print " ................. ";: Color White: Print "Save font";
+    Locate 25, 47: Color Lime: Print "F5";: Color Gray: Print " .............. ";: Color White: Print "Show preview";
+    Locate 27, 47: Color Lime: Print "Escape";: Color Gray: Print " ............. ";: Color White: Print "Main menu";
 
     ' Draw the main character set area
-    Color 15, 8
+    Color White, Gray
     DrawTextBox 1, 1, 42, 30, "Select a character to edit"
 
     Dim As Long x, y
 
     ' Draw the characters
-    Color 14, 1
+    Color Yellow, Navy
     For y = 0 To 7
         For x = 0 To 31
             DrawCharacter 32 * y + x, 9 + x * (FontSize.x + 2), 32 + y * (FontSize.y + 2)
@@ -375,10 +401,10 @@ Function DoChooseCharacter%%
         If MouseInput Then
             If GetMouseOverCharPosiion(x, y) Then
                 ' Turn off the current highlight
-                DrawCharSelector xp, yp, 8
+                DrawCharSelector xp, yp, Gray
                 xp = x
                 yp = y
-                DrawCharSelector xp, yp, 15
+                DrawCharSelector xp, yp, White
 
                 ' Also check for mouse click
                 If MouseButton(1) Or MouseButton(2) Then
@@ -395,28 +421,28 @@ Function DoChooseCharacter%%
 
         Select Case in
             Case KEY_LEFT_ARROW
-                DrawCharSelector xp, yp, 8
+                DrawCharSelector xp, yp, Gray
                 xp = xp - 1
                 If xp < 0 Then xp = 31
-                DrawCharSelector xp, yp, 15
+                DrawCharSelector xp, yp, White
 
             Case KEY_RIGHT_ARROW
-                DrawCharSelector xp, yp, 8
+                DrawCharSelector xp, yp, Gray
                 xp = xp + 1
                 If xp > 31 Then xp = 0
-                DrawCharSelector xp, yp, 15
+                DrawCharSelector xp, yp, White
 
             Case KEY_UP_ARROW
-                DrawCharSelector xp, yp, 8
+                DrawCharSelector xp, yp, Gray
                 yp = yp - 1
                 If yp < 0 Then yp = 7
-                DrawCharSelector xp, yp, 15
+                DrawCharSelector xp, yp, White
 
             Case KEY_DOWN_ARROW
-                DrawCharSelector xp, yp, 8
+                DrawCharSelector xp, yp, Gray
                 yp = yp + 1
                 If yp > 7 Then yp = 0
-                DrawCharSelector xp, yp, 15
+                DrawCharSelector xp, yp, White
 
             Case KEY_ENTER
                 ubFontCharacter = 32 * yp + xp
@@ -453,9 +479,9 @@ Function DoChooseCharacter%%
                     blinkState = Not blinkState
 
                     If blinkState Then
-                        DrawCharSelector xp, yp, 15
+                        DrawCharSelector xp, yp, White
                     Else
-                        DrawCharSelector xp, yp, 8
+                        DrawCharSelector xp, yp, Gray
                     End If
                 End If
         End Select
@@ -472,41 +498,41 @@ Function DoEditCharacter%%
     ' Save the current time
     refTime = Timer
 
-    Cls
+    Cls , Black
 
     ' Show some info
-    Color 11, 1
+    Color OrangeRed, Navy
     DrawTextBox 43, 1, 80, 30, "Controls"
-    Color , 1
-    Locate 4, 47: Color 10: Print "Left Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move left"
-    Locate 5, 47: Color 10: Print "Right Arrow";: Color 8: Print " ....... ";: Color 15: Print "Move right"
-    Locate 6, 47: Color 10: Print "Up Arrow";: Color 8: Print " ............. ";: Color 15: Print "Move up"
-    Locate 7, 47: Color 10: Print "Down Arrow";: Color 8: Print " ......... ";: Color 15: Print "Move down"
-    Locate 8, 47: Color 10: Print "Mouse Pointer";: Color 8: Print " ......... ";: Color 15: Print "Select"
-    Locate 9, 47: Color 10: Print "Left Button";: Color 8: Print " ......... ";: Color 15: Print "Pixel on"
-    Locate 10, 47: Color 10: Print "Right Button";: Color 8: Print " ....... ";: Color 15: Print "Pixel off"
-    Locate 11, 47: Color 10: Print "Spacebar";: Color 8: Print " ........ ";: Color 15: Print "Toggle pixel"
-    Locate 12, 47: Color 10: Print "Delete";: Color 8: Print " ................. ";: Color 15: Print "Clear"
-    Locate 13, 47: Color 10: Print "Insert";: Color 8: Print " .................. ";: Color 15: Print "Fill"
-    Locate 14, 47: Color 10: Print "X";: Color 8: Print " ........................ ";: Color 15: Print "Cut"
-    Locate 15, 47: Color 10: Print "C";: Color 8: Print " ....................... ";: Color 15: Print "Copy"
-    Locate 16, 47: Color 10: Print "P";: Color 8: Print " ...................... ";: Color 15: Print "Paste"
-    Locate 17, 47: Color 10: Print "H";: Color 8: Print " ............ ";: Color 15: Print "Flip horizontal"
-    Locate 18, 47: Color 10: Print "V";: Color 8: Print " .............. ";: Color 15: Print "Flip vertical"
-    Locate 19, 47: Color 10: Print "I";: Color 8: Print " ..................... ";: Color 15: Print "Invert"
-    Locate 20, 47: Color 10: Print "A";: Color 8: Print " ............ ";: Color 15: Print "Horizontal line"
-    Locate 21, 47: Color 10: Print "W";: Color 8: Print " .............. ";: Color 15: Print "Vertical line"
-    Locate 22, 47: Color 10: Print "Home";: Color 8: Print " .............. ";: Color 15: Print "Slide left"
-    Locate 23, 47: Color 10: Print "End";: Color 8: Print " .............. ";: Color 15: Print "Slide right"
-    Locate 24, 47: Color 10: Print "Page Up";: Color 8: Print " ............. ";: Color 15: Print "Slide up"
-    Locate 25, 47: Color 10: Print "Page Down";: Color 8: Print " ......... ";: Color 15: Print "Slide down"
-    Locate 26, 47: Color 10: Print "Enter";: Color 8: Print " .......... ";: Color 15: Print "Save & return"
-    Locate 27, 47: Color 10: Print "Escape";: Color 8: Print " ....... ";: Color 15: Print "Cancel & return"
+    Color , Navy
+    Locate 4, 47: Color Lime: Print "Left Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move left"
+    Locate 5, 47: Color Lime: Print "Right Arrow";: Color Gray: Print " ....... ";: Color White: Print "Move right"
+    Locate 6, 47: Color Lime: Print "Up Arrow";: Color Gray: Print " ............. ";: Color White: Print "Move up"
+    Locate 7, 47: Color Lime: Print "Down Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move down"
+    Locate 8, 47: Color Lime: Print "Mouse Pointer";: Color Gray: Print " ......... ";: Color White: Print "Select"
+    Locate 9, 47: Color Lime: Print "Left Button";: Color Gray: Print " ......... ";: Color White: Print "Pixel on"
+    Locate 10, 47: Color Lime: Print "Right Button";: Color Gray: Print " ....... ";: Color White: Print "Pixel off"
+    Locate 11, 47: Color Lime: Print "Spacebar";: Color Gray: Print " ........ ";: Color White: Print "Toggle pixel"
+    Locate 12, 47: Color Lime: Print "Delete";: Color Gray: Print " ................. ";: Color White: Print "Clear"
+    Locate 13, 47: Color Lime: Print "Insert";: Color Gray: Print " .................. ";: Color White: Print "Fill"
+    Locate 14, 47: Color Lime: Print "X";: Color Gray: Print " ........................ ";: Color White: Print "Cut"
+    Locate 15, 47: Color Lime: Print "C";: Color Gray: Print " ....................... ";: Color White: Print "Copy"
+    Locate 16, 47: Color Lime: Print "P";: Color Gray: Print " ...................... ";: Color White: Print "Paste"
+    Locate 17, 47: Color Lime: Print "H";: Color Gray: Print " ............ ";: Color White: Print "Flip horizontal"
+    Locate 18, 47: Color Lime: Print "V";: Color Gray: Print " .............. ";: Color White: Print "Flip vertical"
+    Locate 19, 47: Color Lime: Print "I";: Color Gray: Print " ..................... ";: Color White: Print "Invert"
+    Locate 20, 47: Color Lime: Print "A";: Color Gray: Print " ............ ";: Color White: Print "Horizontal line"
+    Locate 21, 47: Color Lime: Print "W";: Color Gray: Print " .............. ";: Color White: Print "Vertical line"
+    Locate 22, 47: Color Lime: Print "Home";: Color Gray: Print " .............. ";: Color White: Print "Slide left"
+    Locate 23, 47: Color Lime: Print "End";: Color Gray: Print " .............. ";: Color White: Print "Slide right"
+    Locate 24, 47: Color Lime: Print "Page Up";: Color Gray: Print " ............. ";: Color White: Print "Slide up"
+    Locate 25, 47: Color Lime: Print "Page Down";: Color Gray: Print " ......... ";: Color White: Print "Slide down"
+    Locate 26, 47: Color Lime: Print "Enter";: Color Gray: Print " .......... ";: Color White: Print "Save & return"
+    Locate 27, 47: Color Lime: Print "Escape";: Color Gray: Print " ....... ";: Color White: Print "Cancel & return"
 
     ' Draw the main character set area
-    Color 15, 8
+    Color White, Gray
     DrawTextBox 1, 1, 42, 30, Trim$(Str$(ubFontCharacter) + ": " + Chr$(ubFontCharacter))
-    Locate 2, 27: Color 1, 14: Print "Demonstration:";
+    Locate 2, 27: Color Navy, Yellow: Print "Demonstration:";
 
     Dim cpy As String
 
@@ -528,10 +554,10 @@ Function DoEditCharacter%%
         If MouseInput Then
             If GetMouseOverCellPosition(x, y) Then
                 ' Turn off the current highlight
-                DrawCellSelector xp, yp, 8
+                DrawCellSelector xp, yp, Gray
                 xp = x
                 yp = y
-                DrawCellSelector xp, yp, 15
+                DrawCellSelector xp, yp, White
 
                 ' Also check for mouse click
                 If MouseButton(1) Then
@@ -559,28 +585,28 @@ Function DoEditCharacter%%
 
         Select Case in
             Case KEY_LEFT_ARROW ' Move left
-                DrawCellSelector xp, yp, 8
+                DrawCellSelector xp, yp, Gray
                 xp = xp - 1
                 If xp < 0 Then xp = FontSize.x - 1
-                DrawCellSelector xp, yp, 15
+                DrawCellSelector xp, yp, White
 
             Case KEY_RIGHT_ARROW ' Move right
-                DrawCellSelector xp, yp, 8
+                DrawCellSelector xp, yp, Gray
                 xp = xp + 1
                 If xp >= FontSize.x Then xp = 0
-                DrawCellSelector xp, yp, 15
+                DrawCellSelector xp, yp, White
 
             Case KEY_UP_ARROW ' Move up
-                DrawCellSelector xp, yp, 8
+                DrawCellSelector xp, yp, Gray
                 yp = yp - 1
                 If yp < 0 Then yp = FontSize.y - 1
-                DrawCellSelector xp, yp, 15
+                DrawCellSelector xp, yp, White
 
             Case KEY_DOWN_ARROW ' Move down
-                DrawCellSelector xp, yp, 8
+                DrawCellSelector xp, yp, Gray
                 yp = yp + 1
                 If yp >= FontSize.y Then yp = 0
-                DrawCellSelector xp, yp, 15
+                DrawCellSelector xp, yp, White
 
             Case KEY_SPACE_BAR ' Toggle pixel
                 ' Flag font changed
@@ -777,9 +803,9 @@ Function DoEditCharacter%%
                     blinkState = Not blinkState
 
                     If blinkState Then
-                        DrawCellSelector xp, yp, 15
+                        DrawCellSelector xp, yp, White
                     Else
-                        DrawCellSelector xp, yp, 8
+                        DrawCellSelector xp, yp, Gray
                     End If
                 End If
         End Select
@@ -791,16 +817,16 @@ End Function
 Function DoShowPreview%%
     Shared FontSize As Vector2DType
 
-    Cls
+    Cls , Black
 
     ClearInput
 
     ' Draw a box on the screen
-    Color 11, 1
+    Color Aqua, Navy
     DrawTextBox 1, 1, 80, 30, "Preview"
 
     ' Draw the body
-    Color 15, 1
+    Color White, Navy
     DrawString "This Fox has a longing for grapes:", FontSize.x * 2, FontSize.y * 3
     DrawString "He jumps, but the bunch still escapes.", FontSize.x * 2, FontSize.y * 4
     DrawString "So he goes away sour;", FontSize.x * 2, FontSize.y * 5
@@ -896,9 +922,9 @@ Sub DrawCharBit (ch As Unsigned Byte, x As Long, y As Long)
     xp = 9 + x * 14
     yp = 20 + y * 14
     If ReadBit(Asc(FontData(ch), y + 1), FontSize.x - x - 1) Then
-        Line (xp, yp)-(xp + 12, yp + 12), 14, BF
+        Line (xp, yp)-(xp + 12, yp + 12), Yellow, BF
     Else
-        Line (xp, yp)-(xp + 12, yp + 12), 1, BF
+        Line (xp, yp)-(xp + 12, yp + 12), Navy, BF
     End If
 End Sub
 
@@ -921,7 +947,7 @@ Sub DrawDemo
     Shared FontSize As Vector2DType
     Dim As Long x, y
 
-    Color 15, 0
+    Color White, Black
 
     ' Draw the character on the right side using the font rending code
     For y = 32 To 32 + 12 * FontSize.y Step FontSize.y
@@ -1006,11 +1032,14 @@ End Function
 Function RandomBetween& (lo As Long, hi As Long)
     RandomBetween = lo + Rnd * (hi - lo)
 End Function
-'-----------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' MODULE FILES
-'---------------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'$Include:'./include/Base64.bas'
+'$Include:'./include/ANSIPrint.bas'
 '$Include:'./include/VGAFont.bas'
-'---------------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
