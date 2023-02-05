@@ -1,6 +1,6 @@
-# What is this?
+# VGA FONT EDITOR
 
-This is a cross-platform editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries.
+This is a cross-platform editor and library for VGA ROM fonts. This has code for rendering text using a loaded font. The source code is written in [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe) and works natively without using any third party libraries. Selecting and editing using the mouse is supported.
 
 ![Screenshot](screenshots/Screenshot1.png)
 ![Screenshot](screenshots/Screenshot2.png)
@@ -111,6 +111,11 @@ Function WriteFont%% (sFile As String)
 Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
 Sub DrawString (sText As String, x As Long, y As Long)
 ```
+
+## Assets
+
+- [ANSI Art](https://16colo.rs/artist/grymmjack) by [Rick Christy](https://github.com/grymmjack)
+- [Icon](https://www.iconarchive.com/artist/umut-pulat.html) by [Umut Pulat](http://12m3.deviantart.com/)
 
 ## Important note
 

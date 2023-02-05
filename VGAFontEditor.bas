@@ -136,10 +136,10 @@ Function DoWelcomeScreen%%
     ' Render the menu
     Cls , Black
     Color , Black
-    Color Lime: Print "F1";: Color Gray: Print " ............";: Color Yellow: Print " LOAD"
-    Color Lime: Print "F2";: Color Gray: Print " .............";: Color Yellow: Print " NEW"
-    Color Lime: Print "ENTER";: Color Gray: Print " .......";: Color Yellow: Print " CHOOSE"
-    Color Lime: Print "ESC";: Color Gray: Print " ...........";: Color Yellow: Print " QUIT"
+    Color Lime: Print "F1";: Color LightGray: Print " ............";: Color Yellow: Print " LOAD"
+    Color Lime: Print "F2";: Color LightGray: Print " .............";: Color Yellow: Print " NEW"
+    Color Lime: Print "ENTER";: Color LightGray: Print " .......";: Color Yellow: Print " CHOOSE"
+    Color Lime: Print "ESC";: Color LightGray: Print " ...........";: Color Yellow: Print " QUIT"
 
     ' Capture the rendered image
     Dim As Long imgMenu: imgMenu = NewImage(20 * 8, 4 * 16, 32)
@@ -364,22 +364,22 @@ Function DoChooseCharacter%%
     Color Aqua, Navy
     DrawTextBox 43, 1, 80, 30, "Controls"
     Color , Navy
-    Locate 3, 47: Color Lime: Print "Left Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move left";
-    Locate 5, 47: Color Lime: Print "Right Arrow";: Color Gray: Print " ....... ";: Color White: Print "Move right";
-    Locate 7, 47: Color Lime: Print "Up Arrow";: Color Gray: Print " ............. ";: Color White: Print "Move up";
-    Locate 9, 47: Color Lime: Print "Down Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move down";
-    Locate 11, 47: Color Lime: Print "Mouse Pointer";: Color Gray: Print " ......... ";: Color White: Print "Select";
-    Locate 13, 47: Color Lime: Print "Left Button";: Color Gray: Print " ... ";: Color White: Print "Edit character";
-    Locate 15, 47: Color Lime: Print "Right Button";: Color Gray: Print " .. ";: Color White: Print "Edit character";
-    Locate 17, 47: Color Lime: Print "Enter";: Color Gray: Print " ......... ";: Color White: Print "Edit character";
-    Locate 19, 47: Color Lime: Print "F1";: Color Gray: Print " ................. ";: Color White: Print "Load font";
-    Locate 21, 47: Color Lime: Print "F2";: Color Gray: Print " .................. ";: Color White: Print "New font";
-    Locate 23, 47: Color Lime: Print "F9";: Color Gray: Print " ................. ";: Color White: Print "Save font";
-    Locate 25, 47: Color Lime: Print "F5";: Color Gray: Print " .............. ";: Color White: Print "Show preview";
-    Locate 27, 47: Color Lime: Print "Escape";: Color Gray: Print " ............. ";: Color White: Print "Main menu";
+    Locate 3, 47: Color Lime: Print "Left Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move left";
+    Locate 5, 47: Color Lime: Print "Right Arrow";: Color DimGray: Print " ....... ";: Color White: Print "Move right";
+    Locate 7, 47: Color Lime: Print "Up Arrow";: Color DimGray: Print " ............. ";: Color White: Print "Move up";
+    Locate 9, 47: Color Lime: Print "Down Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move down";
+    Locate 11, 47: Color Lime: Print "Mouse Pointer";: Color DimGray: Print " ......... ";: Color White: Print "Select";
+    Locate 13, 47: Color Lime: Print "Left Button";: Color DimGray: Print " ... ";: Color White: Print "Edit character";
+    Locate 15, 47: Color Lime: Print "Right Button";: Color DimGray: Print " .. ";: Color White: Print "Edit character";
+    Locate 17, 47: Color Lime: Print "Enter";: Color DimGray: Print " ......... ";: Color White: Print "Edit character";
+    Locate 19, 47: Color Lime: Print "F1";: Color DimGray: Print " ................. ";: Color White: Print "Load font";
+    Locate 21, 47: Color Lime: Print "F2";: Color DimGray: Print " .................. ";: Color White: Print "New font";
+    Locate 23, 47: Color Lime: Print "F9";: Color DimGray: Print " ................. ";: Color White: Print "Save font";
+    Locate 25, 47: Color Lime: Print "F5";: Color DimGray: Print " .............. ";: Color White: Print "Show preview";
+    Locate 27, 47: Color Lime: Print "Escape";: Color DimGray: Print " ............. ";: Color White: Print "Main menu";
 
     ' Draw the main character set area
-    Color White, Gray
+    Color White, DimGray
     DrawTextBox 1, 1, 42, 30, "Select a character to edit"
 
     Dim As Long x, y
@@ -401,7 +401,7 @@ Function DoChooseCharacter%%
         If MouseInput Then
             If GetMouseOverCharPosiion(x, y) Then
                 ' Turn off the current highlight
-                DrawCharSelector xp, yp, Gray
+                DrawCharSelector xp, yp, DimGray
                 xp = x
                 yp = y
                 DrawCharSelector xp, yp, White
@@ -421,25 +421,25 @@ Function DoChooseCharacter%%
 
         Select Case in
             Case KEY_LEFT_ARROW
-                DrawCharSelector xp, yp, Gray
+                DrawCharSelector xp, yp, DimGray
                 xp = xp - 1
                 If xp < 0 Then xp = 31
                 DrawCharSelector xp, yp, White
 
             Case KEY_RIGHT_ARROW
-                DrawCharSelector xp, yp, Gray
+                DrawCharSelector xp, yp, DimGray
                 xp = xp + 1
                 If xp > 31 Then xp = 0
                 DrawCharSelector xp, yp, White
 
             Case KEY_UP_ARROW
-                DrawCharSelector xp, yp, Gray
+                DrawCharSelector xp, yp, DimGray
                 yp = yp - 1
                 If yp < 0 Then yp = 7
                 DrawCharSelector xp, yp, White
 
             Case KEY_DOWN_ARROW
-                DrawCharSelector xp, yp, Gray
+                DrawCharSelector xp, yp, DimGray
                 yp = yp + 1
                 If yp > 7 Then yp = 0
                 DrawCharSelector xp, yp, White
@@ -481,7 +481,7 @@ Function DoChooseCharacter%%
                     If blinkState Then
                         DrawCharSelector xp, yp, White
                     Else
-                        DrawCharSelector xp, yp, Gray
+                        DrawCharSelector xp, yp, DimGray
                     End If
                 End If
         End Select
@@ -501,36 +501,36 @@ Function DoEditCharacter%%
     Cls , Black
 
     ' Show some info
-    Color OrangeRed, Navy
+    Color Aqua, Navy
     DrawTextBox 43, 1, 80, 30, "Controls"
     Color , Navy
-    Locate 4, 47: Color Lime: Print "Left Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move left"
-    Locate 5, 47: Color Lime: Print "Right Arrow";: Color Gray: Print " ....... ";: Color White: Print "Move right"
-    Locate 6, 47: Color Lime: Print "Up Arrow";: Color Gray: Print " ............. ";: Color White: Print "Move up"
-    Locate 7, 47: Color Lime: Print "Down Arrow";: Color Gray: Print " ......... ";: Color White: Print "Move down"
-    Locate 8, 47: Color Lime: Print "Mouse Pointer";: Color Gray: Print " ......... ";: Color White: Print "Select"
-    Locate 9, 47: Color Lime: Print "Left Button";: Color Gray: Print " ......... ";: Color White: Print "Pixel on"
-    Locate 10, 47: Color Lime: Print "Right Button";: Color Gray: Print " ....... ";: Color White: Print "Pixel off"
-    Locate 11, 47: Color Lime: Print "Spacebar";: Color Gray: Print " ........ ";: Color White: Print "Toggle pixel"
-    Locate 12, 47: Color Lime: Print "Delete";: Color Gray: Print " ................. ";: Color White: Print "Clear"
-    Locate 13, 47: Color Lime: Print "Insert";: Color Gray: Print " .................. ";: Color White: Print "Fill"
-    Locate 14, 47: Color Lime: Print "X";: Color Gray: Print " ........................ ";: Color White: Print "Cut"
-    Locate 15, 47: Color Lime: Print "C";: Color Gray: Print " ....................... ";: Color White: Print "Copy"
-    Locate 16, 47: Color Lime: Print "P";: Color Gray: Print " ...................... ";: Color White: Print "Paste"
-    Locate 17, 47: Color Lime: Print "H";: Color Gray: Print " ............ ";: Color White: Print "Flip horizontal"
-    Locate 18, 47: Color Lime: Print "V";: Color Gray: Print " .............. ";: Color White: Print "Flip vertical"
-    Locate 19, 47: Color Lime: Print "I";: Color Gray: Print " ..................... ";: Color White: Print "Invert"
-    Locate 20, 47: Color Lime: Print "A";: Color Gray: Print " ............ ";: Color White: Print "Horizontal line"
-    Locate 21, 47: Color Lime: Print "W";: Color Gray: Print " .............. ";: Color White: Print "Vertical line"
-    Locate 22, 47: Color Lime: Print "Home";: Color Gray: Print " .............. ";: Color White: Print "Slide left"
-    Locate 23, 47: Color Lime: Print "End";: Color Gray: Print " .............. ";: Color White: Print "Slide right"
-    Locate 24, 47: Color Lime: Print "Page Up";: Color Gray: Print " ............. ";: Color White: Print "Slide up"
-    Locate 25, 47: Color Lime: Print "Page Down";: Color Gray: Print " ......... ";: Color White: Print "Slide down"
-    Locate 26, 47: Color Lime: Print "Enter";: Color Gray: Print " .......... ";: Color White: Print "Save & return"
-    Locate 27, 47: Color Lime: Print "Escape";: Color Gray: Print " ....... ";: Color White: Print "Cancel & return"
+    Locate 4, 47: Color Lime: Print "Left Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move left"
+    Locate 5, 47: Color Lime: Print "Right Arrow";: Color DimGray: Print " ....... ";: Color White: Print "Move right"
+    Locate 6, 47: Color Lime: Print "Up Arrow";: Color DimGray: Print " ............. ";: Color White: Print "Move up"
+    Locate 7, 47: Color Lime: Print "Down Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move down"
+    Locate 8, 47: Color Lime: Print "Mouse Pointer";: Color DimGray: Print " ......... ";: Color White: Print "Select"
+    Locate 9, 47: Color Lime: Print "Left Button";: Color DimGray: Print " ......... ";: Color White: Print "Pixel on"
+    Locate 10, 47: Color Lime: Print "Right Button";: Color DimGray: Print " ....... ";: Color White: Print "Pixel off"
+    Locate 11, 47: Color Lime: Print "Spacebar";: Color DimGray: Print " ........ ";: Color White: Print "Toggle pixel"
+    Locate 12, 47: Color Lime: Print "Delete";: Color DimGray: Print " ................. ";: Color White: Print "Clear"
+    Locate 13, 47: Color Lime: Print "Insert";: Color DimGray: Print " .................. ";: Color White: Print "Fill"
+    Locate 14, 47: Color Lime: Print "X";: Color DimGray: Print " ........................ ";: Color White: Print "Cut"
+    Locate 15, 47: Color Lime: Print "C";: Color DimGray: Print " ....................... ";: Color White: Print "Copy"
+    Locate 16, 47: Color Lime: Print "P";: Color DimGray: Print " ...................... ";: Color White: Print "Paste"
+    Locate 17, 47: Color Lime: Print "H";: Color DimGray: Print " ............ ";: Color White: Print "Flip horizontal"
+    Locate 18, 47: Color Lime: Print "V";: Color DimGray: Print " .............. ";: Color White: Print "Flip vertical"
+    Locate 19, 47: Color Lime: Print "I";: Color DimGray: Print " ..................... ";: Color White: Print "Invert"
+    Locate 20, 47: Color Lime: Print "A";: Color DimGray: Print " ............ ";: Color White: Print "Horizontal line"
+    Locate 21, 47: Color Lime: Print "W";: Color DimGray: Print " .............. ";: Color White: Print "Vertical line"
+    Locate 22, 47: Color Lime: Print "Home";: Color DimGray: Print " .............. ";: Color White: Print "Slide left"
+    Locate 23, 47: Color Lime: Print "End";: Color DimGray: Print " .............. ";: Color White: Print "Slide right"
+    Locate 24, 47: Color Lime: Print "Page Up";: Color DimGray: Print " ............. ";: Color White: Print "Slide up"
+    Locate 25, 47: Color Lime: Print "Page Down";: Color DimGray: Print " ......... ";: Color White: Print "Slide down"
+    Locate 26, 47: Color Lime: Print "Enter";: Color DimGray: Print " .......... ";: Color White: Print "Save & return"
+    Locate 27, 47: Color Lime: Print "Escape";: Color DimGray: Print " ....... ";: Color White: Print "Cancel & return"
 
     ' Draw the main character set area
-    Color White, Gray
+    Color White, DimGray
     DrawTextBox 1, 1, 42, 30, Trim$(Str$(ubFontCharacter) + ": " + Chr$(ubFontCharacter))
     Locate 2, 27: Color Navy, Yellow: Print "Demonstration:";
 
@@ -554,7 +554,7 @@ Function DoEditCharacter%%
         If MouseInput Then
             If GetMouseOverCellPosition(x, y) Then
                 ' Turn off the current highlight
-                DrawCellSelector xp, yp, Gray
+                DrawCellSelector xp, yp, DimGray
                 xp = x
                 yp = y
                 DrawCellSelector xp, yp, White
@@ -585,25 +585,25 @@ Function DoEditCharacter%%
 
         Select Case in
             Case KEY_LEFT_ARROW ' Move left
-                DrawCellSelector xp, yp, Gray
+                DrawCellSelector xp, yp, DimGray
                 xp = xp - 1
                 If xp < 0 Then xp = FontSize.x - 1
                 DrawCellSelector xp, yp, White
 
             Case KEY_RIGHT_ARROW ' Move right
-                DrawCellSelector xp, yp, Gray
+                DrawCellSelector xp, yp, DimGray
                 xp = xp + 1
                 If xp >= FontSize.x Then xp = 0
                 DrawCellSelector xp, yp, White
 
             Case KEY_UP_ARROW ' Move up
-                DrawCellSelector xp, yp, Gray
+                DrawCellSelector xp, yp, DimGray
                 yp = yp - 1
                 If yp < 0 Then yp = FontSize.y - 1
                 DrawCellSelector xp, yp, White
 
             Case KEY_DOWN_ARROW ' Move down
-                DrawCellSelector xp, yp, Gray
+                DrawCellSelector xp, yp, DimGray
                 yp = yp + 1
                 If yp >= FontSize.y Then yp = 0
                 DrawCellSelector xp, yp, White
@@ -805,7 +805,7 @@ Function DoEditCharacter%%
                     If blinkState Then
                         DrawCellSelector xp, yp, White
                     Else
-                        DrawCellSelector xp, yp, Gray
+                        DrawCellSelector xp, yp, DimGray
                     End If
                 End If
         End Select
