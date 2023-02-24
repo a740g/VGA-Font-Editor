@@ -132,4 +132,4 @@ Function WriteFont%% (sFile As String)
 
 ## Important note
 
-The editor uses new features introduced in [QB64-PE v3.4+](https://github.com/QB64-Phoenix-Edition/QB64pe/releases) and as such may not work correctly or reliably with older versions of QB64-PE or any version of QB64. You've been warned. Please don't nag me about backwards compatiblity.
+This requires the latest version of [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe)
