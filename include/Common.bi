@@ -9,7 +9,7 @@ $If COMMON_BI = UNDEFINED Then
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
     ' METACOMMANDS
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    $If VERSION < 3.5 Then
+    $If VERSION < 3.6 Then
             $Error This requires the latest version of QB64-PE from https://github.com/QB64-Phoenix-Edition/QB64pe/releases
     $End If
 
@@ -28,7 +28,7 @@ $If COMMON_BI = UNDEFINED Then
     ' All arrays should be static. If dynamic arrays are required use "ReDim"
     '$Static
 
-    ' Start array lower bound from 1. If 0 is required this should be explicitly specified as (0 To X)
+    ' Start array lower bound from 1. If 0 is required, then it should be explicitly specified as (0 To X)
     Option Base 1
 
     ' We want our window to be resizeable. "Smooth" is a personal preference. Use "Stretch" if preferred
@@ -54,7 +54,9 @@ $If COMMON_BI = UNDEFINED Then
     Const KEY_OPEN_PARENTHESIS = 40
     Const KEY_CLOSE_PARENTHESIS = 41
     Const KEY_PLUS = 43
+    Const KEY_COMMA = 44
     Const KEY_MINUS = 45
+    Const KEY_DOT = 46
     Const KEY_SLASH = 47
     Const KEY_0 = 48
     Const KEY_1 = 49
@@ -68,7 +70,9 @@ $If COMMON_BI = UNDEFINED Then
     Const KEY_9 = 57
     Const KEY_COLON = 58
     Const KEY_SEMICOLON = 59
+    Const KEY_LESS_THAN = 60
     Const KEY_EQUALS = 61
+    Const KEY_GREATER_THAN = 62
     Const KEY_UPPER_A = 65
     Const KEY_UPPER_B = 66
     Const KEY_UPPER_C = 67
@@ -155,10 +159,16 @@ $If COMMON_BI = UNDEFINED Then
     Const KEY_RIGHT_ALT = 100306
     Const KEY_LEFT_ALT = 100308
     ' QB64 errors that we can throw if something bad happens
+    Const ERROR_SYNTAX_ERROR = 2
+    Const ERROR_OVERFLOW = 6
     Const ERROR_CANNOT_CONTINUE = 17
     Const ERROR_INTERNAL_ERROR = 51
+    Const ERROR_FILE_NOT_FOUND = 53
     Const ERROR_FEATURE_UNAVAILABLE = 73
+    Const ERROR_PATH_NOT_FOUND = 76
+    Const ERROR_OUT_OF_MEMORY = 257
     Const ERROR_INVALID_HANDLE = 258
+    Const ERROR_MEMORY_REGION_OUT_OF_RANGE = 300
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
 $End If
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------

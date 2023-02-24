@@ -106,10 +106,23 @@ Anything you want! You may use the file format or sourcecode for embedded, retro
 ## API
 
 ```VB
-Function ReadFont%% (sFile As String, ignoreMode As Byte)
+' For rendering
+Function ReadFont%% (sFile As String, ignoreMode As Byte, psf As PSFType)
+Sub SetCurrentFont (psf As PSFType)
+Function GetFontWidth~%%
+Function GetFontHeight~%%
+Function GetDrawStringWidth& (text As String)
+Sub DrawCharacter (cp As Unsigned Byte, x As Long, y As Long)
+Sub DrawString (text As String, x As Long, y As Long)
+
+' Used by the editor
+Sub SetFontHeight (h As Unsigned Byte)
+Function GetGlyphBitmap$ (cp As Unsigned Byte)
+Sub SetGlyphBitmap (cp As Unsigned Byte, bmp As String)
+Sub SetGlyphDefaultBitmap (cp As Unsigned Byte)
+Function GetGlyphPixel%% (cp As Unsigned Byte, x As Long, y As Long)
+Sub SetGlyphPixel (cp As Unsigned Byte, x As Long, y As Long, b As Byte)
 Function WriteFont%% (sFile As String)
-Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
-Sub DrawString (sText As String, x As Long, y As Long)
 ```
 
 ## Assets

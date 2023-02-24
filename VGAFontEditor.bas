@@ -45,6 +45,8 @@ Const EVENT_SAVE = 8
 ' Screen properties
 Const SCREEN_WIDTH = 640
 Const SCREEN_HEIGHT = 480
+' FPS
+Const UPDATES_PER_SECOND = 30
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -150,8 +152,6 @@ Function DoWelcomeScreen%%
     Dest oldDest
     FreeImage img
 
-    Shared FontSize As Vector2DType ' needed to check if a font is loaded
-
     Const STAR_COUNT = 1024 ' the maximum stars that we can show
     Dim As Single starX(1 To STAR_COUNT), starY(1 To STAR_COUNT), starZ(1 To STAR_COUNT)
     Dim As Unsigned Long starC(1 To STAR_COUNT)
@@ -171,7 +171,7 @@ Function DoWelcomeScreen%%
 
             PSet (starX(i), starY(i)), starC(i)
 
-            starZ(i) = starZ(i) + 0.25
+            starZ(i) = starZ(i) + 0.5
             starX(i) = ((starX(i) - (Width / 2)) * (starZ(i) / 4096)) + (Width / 2)
             starY(i) = ((starY(i) - (Height / 2)) * (starZ(i) / 4096)) + (Height / 2)
         Next
@@ -179,7 +179,7 @@ Function DoWelcomeScreen%%
         PutImage (0, 0), imgANSI
         PutImage (SCREEN_WIDTH \ 2 - Width(imgMenu) \ 2, SCREEN_HEIGHT \ 2 - Height(imgMenu) \ 2), imgMenu
 
-        Limit 60
+        Limit UPDATES_PER_SECOND
         Display
 
         k = KeyHit
@@ -192,7 +192,7 @@ Function DoWelcomeScreen%%
                 e = EVENT_NEW
 
             Case KEY_ENTER
-                If FontSize.y > 0 Then e = EVENT_CHOOSE
+                If GetFontHeight > 0 Then e = EVENT_CHOOSE
 
             Case KEY_ESCAPE
                 e = EVENT_QUIT
@@ -231,7 +231,6 @@ End Function
 
 ' Creates an empty font file
 Function DoNewFont%%
-    Shared FontSize As Vector2DType
     Dim ubFontHeight As Long
 
     ' Attempt to save the font if there is one
@@ -242,7 +241,7 @@ Function DoNewFont%%
     If ubFontHeight < 8 Or ubFontHeight > 32 Then
         MessageBox APP_NAME, "Enter a valid font height!", "error"
 
-        If FontSize.y <= 0 Then DoNewFont = EVENT_NONE
+        If GetFontHeight <= 0 Then DoNewFont = EVENT_NONE
         Exit Function
     End If
 
@@ -256,8 +255,7 @@ End Function
 
 ' Handles and command line parameters
 Function DoCommandLine%%
-    ' Default to no event
-    DoCommandLine = EVENT_NONE
+    DoCommandLine = EVENT_NONE ' Default to no event
 
     ' Check if any help is needed
     If Command$(1) = "/?" Or Command$(1) = "-?" Then
@@ -272,7 +270,9 @@ Function DoCommandLine%%
     If sFontFile <> NULLSTRING Then
         If FileExists(sFontFile) Then
             ' Read in the font
-            If ReadFont(sFontFile, TRUE) Then
+            Dim psf As PSFType
+            If ReadFont(sFontFile, TRUE, psf) Then
+                SetCurrentFont psf
                 Title APP_NAME + " - " + GetFileNameFromPath(sFontFile)
                 ResizeClipboard
             Else
@@ -289,7 +289,6 @@ End Function
 
 ' This is called when a font has to be loaded
 Function DoLoadFont%%
-    Shared FontSize As Vector2DType
     Dim tmpFilename As String
 
     ' Attempt to save the font if there is one
@@ -300,12 +299,14 @@ Function DoLoadFont%%
 
     ' Exit if user canceled
     If tmpFilename = NULLSTRING Then
-        If FontSize.y <= 0 Then DoLoadFont = EVENT_NONE ' Do nothing if no font file is loaded
+        If GetFontHeight <= 0 Then DoLoadFont = EVENT_NONE ' Do nothing if no font file is loaded
         Exit Function
     End If
 
     ' Read in the font
-    If ReadFont(tmpFilename, TRUE) Then
+    Dim psf As PSFType
+    If ReadFont(tmpFilename, TRUE, psf) Then
+        SetCurrentFont psf
         sFontFile = tmpFilename
         Title APP_NAME + " - " + GetFileNameFromPath(sFontFile)
         ResizeClipboard
@@ -319,8 +320,7 @@ End Function
 
 ' This is called when the file should be saved
 Function DoSaveFont%%
-    ' Default to the character choose event
-    DoSaveFont = EVENT_CHOOSE
+    DoSaveFont = EVENT_CHOOSE ' default to the character choose event
 
     ' Only attempt to save if the font has changed
     If bFontChanged Then
@@ -351,7 +351,6 @@ End Function
 
 ' This is the character selector routine
 Function DoChooseCharacter%%
-    Shared FontSize As Vector2DType
     Static xp As Long, yp As Long
     Dim refTime As Single, blinkState As Byte
 
@@ -388,7 +387,7 @@ Function DoChooseCharacter%%
     Color Yellow, Navy
     For y = 0 To 7
         For x = 0 To 31
-            DrawCharacter 32 * y + x, 9 + x * (FontSize.x + 2), 32 + y * (FontSize.y + 2)
+            DrawCharacter 32 * y + x, 9 + x * (GetFontWidth + 2), 32 + y * (GetFontHeight + 2)
         Next
     Next
 
@@ -414,7 +413,7 @@ Function DoChooseCharacter%%
                 End If
             End If
         Else
-            Delay 0.01
+            Limit UPDATES_PER_SECOND
         End If
 
         in = KeyHit
@@ -491,8 +490,6 @@ End Function
 
 ' This is font bitmap editor routine
 Function DoEditCharacter%%
-    Shared FontSize As Vector2DType
-    Shared FontData() As String
     Dim refTime As Single, blinkState As Byte
 
     ' Save the current time
@@ -534,18 +531,15 @@ Function DoEditCharacter%%
     DrawTextBox 1, 1, 42, 30, Trim$(Str$(ubFontCharacter) + ": " + Chr$(ubFontCharacter))
     Locate 2, 27: Color Navy, Yellow: Print "Demonstration:";
 
-    Dim cpy As String
-
     ' Save a copy of this character
-    cpy = FontData(ubFontCharacter)
+    Dim cpy As String: cpy = GetGlyphBitmap(ubFontCharacter)
 
     ' Draw the initial bitmap
     DrawCharBitmap ubFontCharacter
     DrawDemo
 
-    Dim As Long xp, yp, x, y
+    Dim As Long xp, yp, x, y, in
     Dim tmp As String, sl As Unsigned Byte
-    Dim in As Long
 
     ' Clear keyboard and mouse
     ClearInput
@@ -564,21 +558,21 @@ Function DoEditCharacter%%
                     ' Flag font changed
                     bFontChanged = TRUE
 
-                    Asc(FontData(ubFontCharacter), yp + 1) = SetBit(Asc(FontData(ubFontCharacter), yp + 1), FontSize.x - xp - 1)
+                    SetGlyphPixel ubFontCharacter, xp, yp, TRUE
                 End If
 
                 If MouseButton(2) Then
                     ' Flag font changed
                     bFontChanged = TRUE
 
-                    Asc(FontData(ubFontCharacter), yp + 1) = ResetBit(Asc(FontData(ubFontCharacter), yp + 1), FontSize.x - xp - 1)
+                    SetGlyphPixel ubFontCharacter, xp, yp, FALSE
                 End If
 
                 DrawCharBit ubFontCharacter, xp, yp
                 DrawDemo
             End If
         Else
-            Delay 0.01
+            Limit UPDATES_PER_SECOND
         End If
 
         in = KeyHit
@@ -587,33 +581,32 @@ Function DoEditCharacter%%
             Case KEY_LEFT_ARROW ' Move left
                 DrawCellSelector xp, yp, DimGray
                 xp = xp - 1
-                If xp < 0 Then xp = FontSize.x - 1
+                If xp < 0 Then xp = GetFontWidth - 1
                 DrawCellSelector xp, yp, White
 
             Case KEY_RIGHT_ARROW ' Move right
                 DrawCellSelector xp, yp, DimGray
                 xp = xp + 1
-                If xp >= FontSize.x Then xp = 0
+                If xp >= GetFontWidth Then xp = 0
                 DrawCellSelector xp, yp, White
 
             Case KEY_UP_ARROW ' Move up
                 DrawCellSelector xp, yp, DimGray
                 yp = yp - 1
-                If yp < 0 Then yp = FontSize.y - 1
+                If yp < 0 Then yp = GetFontHeight - 1
                 DrawCellSelector xp, yp, White
 
             Case KEY_DOWN_ARROW ' Move down
                 DrawCellSelector xp, yp, DimGray
                 yp = yp + 1
-                If yp >= FontSize.y Then yp = 0
+                If yp >= GetFontHeight Then yp = 0
                 DrawCellSelector xp, yp, White
 
             Case KEY_SPACE_BAR ' Toggle pixel
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                Asc(FontData(ubFontCharacter), yp + 1) = ToggleBit(Asc(FontData(ubFontCharacter), yp + 1), FontSize.x - xp - 1)
-
+                SetGlyphPixel ubFontCharacter, xp, yp, Not GetGlyphPixel(ubFontCharacter, xp, yp)
                 DrawCharBit ubFontCharacter, xp, yp
                 DrawDemo
 
@@ -621,8 +614,7 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                FontData(ubFontCharacter) = String$(FontSize.y, NULL)
-
+                SetGlyphBitmap ubFontCharacter, String$(GetFontHeight, NULL)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -630,8 +622,7 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                FontData(ubFontCharacter) = String$(FontSize.y, 255)
-
+                SetGlyphBitmap ubFontCharacter, String$(GetFontHeight, 255)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -639,21 +630,19 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                sClipboard = FontData(ubFontCharacter)
-                FontData(ubFontCharacter) = String$(FontSize.y, NULL)
-
+                sClipboard = GetGlyphBitmap(ubFontCharacter)
+                SetGlyphBitmap ubFontCharacter, String$(GetFontHeight, NULL)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
             Case KEY_LOWER_C, KEY_UPPER_C ' Copy
-                sClipboard = FontData(ubFontCharacter)
+                sClipboard = GetGlyphBitmap(ubFontCharacter)
 
             Case KEY_LOWER_P, KEY_UPPER_P ' Paste
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                FontData(ubFontCharacter) = sClipboard
-
+                SetGlyphBitmap ubFontCharacter, sClipboard
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -661,18 +650,11 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = String$(FontSize.y, NULL)
-
-                For y = 0 To FontSize.y - 1
-                    For x = 0 To FontSize.x - 1
-                        If ReadBit(Asc(FontData(ubFontCharacter), y + 1), FontSize.x - x - 1) Then
-                            Asc(tmp, y + 1) = Asc(tmp, y + 1) + (2 ^ x)
-                        End If
-                    Next
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                For y = 0 To GetFontHeight - 1
+                    Asc(tmp, y + 1) = ReverseBitsInByte(Asc(tmp, y + 1))
                 Next
-
-                FontData(ubFontCharacter) = tmp
-
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -680,12 +662,7 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = FontData(ubFontCharacter)
-
-                For y = 0 To FontSize.y - 1
-                    Asc(FontData(ubFontCharacter), y + 1) = Asc(tmp, FontSize.y - y)
-                Next
-
+                SetGlyphBitmap ubFontCharacter, ReverseString(GetGlyphBitmap(ubFontCharacter))
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -693,12 +670,11 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = FontData(ubFontCharacter)
-
-                For y = 0 To FontSize.y - 1
-                    Asc(FontData(ubFontCharacter), y + 1) = 255 - Asc(tmp, y + 1)
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                For y = 0 To GetFontHeight - 1
+                    Asc(tmp, y + 1) = 255 - Asc(tmp, y + 1)
                 Next
-
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -706,19 +682,19 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                Asc(FontData(ubFontCharacter), yp + 1) = 255
-
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                Asc(tmp, yp + 1) = 255
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_L, KEY_UPPER_U ' Vertical line
+            Case KEY_LOWER_W, KEY_UPPER_W ' Vertical line
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                For y = 0 To FontSize.y - 1
-                    Asc(FontData(ubFontCharacter), y + 1) = SetBit(Asc(FontData(ubFontCharacter), y + 1), FontSize.x - xp - 1)
+                For y = 0 To GetFontHeight - 1
+                    SetGlyphPixel ubFontCharacter, xp, y, TRUE
                 Next
-
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -726,11 +702,12 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                For y = 0 To FontSize.y - 1
-                    sl = Asc(FontData(ubFontCharacter), y + 1)
-                    Asc(FontData(ubFontCharacter), y + 1) = RoL(sl, 1)
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                For y = 0 To GetFontHeight - 1
+                    sl = Asc(tmp, y + 1) ' Asc() returns integer instead of byte :(
+                    Asc(tmp, y + 1) = RoL(sl, 1)
                 Next
-
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -738,11 +715,12 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                For y = 0 To FontSize.y - 1
-                    sl = Asc(FontData(ubFontCharacter), y + 1)
-                    Asc(FontData(ubFontCharacter), y + 1) = RoR(sl, 1)
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                For y = 0 To GetFontHeight - 1
+                    sl = Asc(tmp, y + 1) ' Asc() returns integer instead of byte :(
+                    Asc(tmp, y + 1) = RoR(sl, 1)
                 Next
-
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -750,18 +728,13 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = FontData(ubFontCharacter)
-
-                ' Shift scanlines up
-                For y = 0 To FontSize.y - 2
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                sl = Asc(tmp, 1)
+                For y = 0 To GetFontHeight - 2
                     Asc(tmp, y + 1) = Asc(tmp, y + 2)
                 Next
-
-                ' Set the last line
-                Asc(tmp, FontSize.y) = Asc(FontData(ubFontCharacter), 1)
-
-                FontData(ubFontCharacter) = tmp
-
+                Asc(tmp, GetFontHeight) = sl
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -769,18 +742,13 @@ Function DoEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = FontData(ubFontCharacter)
-
-                ' Shift scanlines down
-                For y = FontSize.y - 1 To 1 Step -1
+                tmp = GetGlyphBitmap(ubFontCharacter)
+                sl = Asc(tmp, GetFontHeight)
+                For y = GetFontHeight - 1 To 1 Step -1
                     Asc(tmp, y + 1) = Asc(tmp, y)
                 Next
-
-                ' Set the last line
-                Asc(tmp, 1) = Asc(FontData(ubFontCharacter), FontSize.y)
-
-                FontData(ubFontCharacter) = tmp
-
+                Asc(tmp, 1) = sl
+                SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
@@ -790,7 +758,7 @@ Function DoEditCharacter%%
                 Exit Do
 
             Case KEY_ESCAPE ' Cancel & return
-                FontData(ubFontCharacter) = cpy
+                SetGlyphBitmap ubFontCharacter, cpy
 
                 DoEditCharacter = EVENT_CHOOSE
 
@@ -815,8 +783,6 @@ End Function
 
 ' Draws a preview screen using the loaded font
 Function DoShowPreview%%
-    Shared FontSize As Vector2DType
-
     Cls , Black
 
     ClearInput
@@ -827,19 +793,19 @@ Function DoShowPreview%%
 
     ' Draw the body
     Color White, Navy
-    DrawString "This Fox has a longing for grapes:", FontSize.x * 2, FontSize.y * 3
-    DrawString "He jumps, but the bunch still escapes.", FontSize.x * 2, FontSize.y * 4
-    DrawString "So he goes away sour;", FontSize.x * 2, FontSize.y * 5
-    DrawString "And, 'tis said, to this hour", FontSize.x * 2, FontSize.y * 6
-    DrawString "Declares that he's no taste for grapes.", FontSize.x * 2, FontSize.y * 7
-    DrawString "     /\                   ,'|", FontSize.x * 45, FontSize.y * 3
-    DrawString " o--'O `.                /  /", FontSize.x * 45, FontSize.y * 4
-    DrawString "  `--.   `-----------._,' ,'", FontSize.x * 45, FontSize.y * 5
-    DrawString "      \              ,---'", FontSize.x * 45, FontSize.y * 6
-    DrawString "       ) )    _,--(  |", FontSize.x * 45, FontSize.y * 7
-    DrawString "      /,^.---'     )/\\", FontSize.x * 45, FontSize.y * 8
-    DrawString "     ((   \\      ((  \\", FontSize.x * 45, FontSize.y * 9
-    DrawString "      \)   \)      \) (/", FontSize.x * 45, FontSize.y * 10
+    DrawString "This Fox has a longing for grapes:", GetFontWidth * 2, GetFontHeight * 3
+    DrawString "He jumps, but the bunch still escapes.", GetFontWidth * 2, GetFontHeight * 4
+    DrawString "So he goes away sour;", GetFontWidth * 2, GetFontHeight * 5
+    DrawString "And, 'tis said, to this hour", GetFontWidth * 2, GetFontHeight * 6
+    DrawString "Declares that he's no taste for grapes.", GetFontWidth * 2, GetFontHeight * 7
+    DrawString "     /\                   ,'|", GetFontWidth * 45, GetFontHeight * 3
+    DrawString " o--'O `.                /  /", GetFontWidth * 45, GetFontHeight * 4
+    DrawString "  `--.   `-----------._,' ,'", GetFontWidth * 45, GetFontHeight * 5
+    DrawString "      \              ,---'", GetFontWidth * 45, GetFontHeight * 6
+    DrawString "       ) )    _,--(  |", GetFontWidth * 45, GetFontHeight * 7
+    DrawString "      /,^.---'     )/\\", GetFontWidth * 45, GetFontHeight * 8
+    DrawString "     ((   \\      ((  \\", GetFontWidth * 45, GetFontHeight * 9
+    DrawString "      \)   \)      \) (/", GetFontWidth * 45, GetFontHeight * 10
 
     WaitInput
 
@@ -849,9 +815,7 @@ End Function
 
 ' Resizes the clipboard to match the font height
 Sub ResizeClipboard
-    Shared FontSize As Vector2DType
-
-    sClipboard = Left$(sClipboard + String$(FontSize.y, NULL), FontSize.y)
+    sClipboard = Left$(sClipboard + String$(GetFontHeight, NULL), GetFontHeight)
 End Sub
 
 
@@ -859,14 +823,13 @@ End Sub
 ' Updates mxp & myp with position
 ' This is used by the character chooser
 Function GetMouseOverCharPosiion%% (mxp As Long, myp As Long)
-    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     GetMouseOverCharPosiion = FALSE
 
     For y = 0 To 7
         For x = 0 To 31
-            If PointCollidesWithRect(MouseX, MouseY, 8 + x * (FontSize.x + 2), 31 + y * (FontSize.y + 2), 9 + FontSize.x + x * (FontSize.x + 2), 32 + FontSize.y + y * (FontSize.y + 2)) Then
+            If PointCollidesWithRect(MouseX, MouseY, 8 + x * (GetFontWidth + 2), 31 + y * (GetFontHeight + 2), 9 + GetFontWidth + x * (GetFontWidth + 2), 32 + GetFontHeight + y * (GetFontHeight + 2)) Then
                 mxp = x
                 myp = y
                 GetMouseOverCharPosiion = TRUE
@@ -879,9 +842,7 @@ End Function
 
 ' Draw the character selector using color c at xp, yp
 Sub DrawCharSelector (xp As Long, yp As Long, c As Unsigned Long)
-    Shared FontSize As Vector2DType
-
-    Line (8 + xp * (FontSize.x + 2), 31 + yp * (FontSize.y + 2))-(9 + FontSize.x + xp * (FontSize.x + 2), 32 + FontSize.y + yp * (FontSize.y + 2)), c, B
+    Line (8 + xp * (GetFontWidth + 2), 31 + yp * (GetFontHeight + 2))-(9 + GetFontWidth + xp * (GetFontWidth + 2), 32 + GetFontHeight + yp * (GetFontHeight + 2)), c, B
 End Sub
 
 
@@ -889,13 +850,12 @@ End Sub
 ' Updates mxp & myp with position
 ' This is used by the bitmap editor
 Function GetMouseOverCellPosition%% (mxp As Long, myp As Long)
-    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     GetMouseOverCellPosition = FALSE
 
-    For y = 0 To FontSize.y - 1
-        For x = 0 To FontSize.x - 1
+    For y = 0 To GetFontHeight - 1
+        For x = 0 To GetFontWidth - 1
             If PointCollidesWithRect(MouseX, MouseY, 8 + x * 14, 19 + y * 14, 22 + x * 14, 33 + y * 14) Then
                 mxp = x
                 myp = y
@@ -915,13 +875,11 @@ End Sub
 
 ' This draws a single character pixel block
 Sub DrawCharBit (ch As Unsigned Byte, x As Long, y As Long)
-    Shared FontSize As Vector2DType
-    Shared FontData() As String
     Dim As Long xp, yp
 
     xp = 9 + x * 14
     yp = 20 + y * 14
-    If ReadBit(Asc(FontData(ch), y + 1), FontSize.x - x - 1) Then
+    If GetGlyphPixel(ch, x, y) Then
         Line (xp, yp)-(xp + 12, yp + 12), Yellow, BF
     Else
         Line (xp, yp)-(xp + 12, yp + 12), Navy, BF
@@ -931,11 +889,10 @@ End Sub
 
 ' Draw the character bitmap for editing
 Sub DrawCharBitmap (ch As Unsigned Byte)
-    Shared FontSize As Vector2DType
     Dim As Long x, y
 
-    For y = 0 To FontSize.y - 1
-        For x = 0 To FontSize.x - 1
+    For y = 0 To GetFontHeight - 1
+        For x = 0 To GetFontWidth - 1
             DrawCharBit ch, x, y
         Next
     Next
@@ -944,14 +901,13 @@ End Sub
 
 ' This draws a grid of the same character for demo purpose on the edit screen
 Sub DrawDemo
-    Shared FontSize As Vector2DType
     Dim As Long x, y
 
     Color White, Black
 
     ' Draw the character on the right side using the font rending code
-    For y = 32 To 32 + 12 * FontSize.y Step FontSize.y
-        For x = 208 To 208 + 13 * FontSize.x Step FontSize.x
+    For y = 32 To 32 + 12 * GetFontHeight Step GetFontHeight
+        For x = 208 To 208 + 13 * GetFontWidth Step GetFontWidth
             DrawCharacter ubFontCharacter, x, y
         Next
     Next
@@ -998,7 +954,7 @@ Sub WaitInput
         While MouseInput
             If MouseButton(1) Or MouseButton(2) Or MouseButton(3) Then Exit Do
         Wend
-        Delay 0.01
+        Limit UPDATES_PER_SECOND
     Loop While KeyHit <= NULL
 End Sub
 
@@ -1011,13 +967,34 @@ Sub ClearInput
 End Sub
 
 
+' Reverses the order of bits in a byte: 10011101 becomes 10111001
+Function ReverseBitsInByte~%% (b As Unsigned Byte)
+    Dim r As Unsigned Byte: r = b
+    r = ShR(r And &B11110000, 4) Or ShL(r And &B00001111, 4)
+    r = ShR(r And &B11001100, 2) Or ShL(r And &B00110011, 2)
+    r = ShR(r And &B10101010, 1) Or ShL(r And &B01010101, 1)
+    ReverseBitsInByte = r
+End Function
+
+
+' Reverses the characters in a string
+Function ReverseString$ (s As String)
+    Dim t As String: t = Space$(Len(s))
+    Dim i As Long
+    For i = 1 To Len(s)
+        Asc(t, i) = Asc(s, 1 + Len(s) - i)
+    Next
+    ReverseString = t
+End Function
+
+
 ' Gets the filename portion from a file path
 Function GetFileNameFromPath$ (pathName As String)
     Dim i As Unsigned Long
 
     ' Retrieve the position of the first / or \ in the parameter from the
     For i = Len(pathName) To 1 Step -1
-        If Asc(pathName, i) = 47 Or Asc(pathName, i) = 92 Then Exit For
+        If KEY_SLASH = Asc(pathName, i) Or KEY_BACKSLASH = Asc(pathName, i) Then Exit For
     Next
 
     ' Return the full string if pathsep was not found

@@ -14,116 +14,98 @@ $If VGAFONT_BAS = UNDEFINED Then
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
     ' FUNCTIONS & SUBROUTINES
     '-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    ' Changes the font height in memory
-    ' This can be used by an editor
-    ' This will crop the font if a font is loaded!
-    Sub SetFontHeight (nHeight As Unsigned Byte)
-        Shared FontSize As Vector2DType
-        Shared FontData() As String
-        Dim i As Long
-
-        ' Change the global font height
-        FontSize.y = nHeight
-        FontSize.x = 8 ' Our width is always 8
-
-        ' Now change the main font array height
-        For i = 0 To 255
-            FontData(i) = Left$(FontData(i) + String$(nHeight, NULL), nHeight)
-        Next
-    End Sub
-
-
-    ' This will clear the font glyphs
-    Sub ResetFont
-        Shared FontSize As Vector2DType
-        Shared FontData() As String
-        Dim i As Long
-
-        For i = 0 To 255
-            FontData(i) = String$(FontSize.y, NULL)
-        Next
-    End Sub
-
-
-    ' Draws a single character at x, y
-    Sub DrawCharacter (nChar As Unsigned Byte, x As Long, y As Long)
+    ' Draws a single character at x, y using the active font
+    Sub DrawCharacter (cp As Unsigned Byte, x As Long, y As Long)
         $Checking:Off
-        Shared FontSize As Vector2DType
-        Shared FontData() As String
-        Dim As Long uy, r, t, p, fc, bc
+        Shared __CurPSF As PSFType
+        Dim As Long uy, r, t, p, bc, pm
 
-        ' Calculate right just once
-        r = x + FontSize.x - 1
+        r = x + __CurPSF.size.x - 1 ' calculate right just once
 
-        fc = DefaultColor
         bc = BackgroundColor
+        pm = PrintMode
 
         ' Go through the scan line one at a time
-        For uy = 1 To FontSize.y
+        For uy = 1 To __CurPSF.size.y
             ' Get the scan line and pepare it
-            p = Asc(FontData(nChar), uy)
+            p = Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + uy)
             p = 256 * (p + (256 * (p > 127)))
             ' Draw the line
             t = y + uy - 1
-            Line (x, t)-(r, t), bc
-            Line (x, t)-(r, t), fc, , p
+            If pm = 3 Then Line (x, t)-(r, t), bc
+            Line (x, t)-(r, t), , , p
         Next
         $Checking:On
     End Sub
 
 
-    ' Draws a string at x, y
-    Sub DrawString (sText As String, x As Long, y As Long)
+    ' Draws a string at x, y using the active font
+    Sub DrawString (text As String, x As Long, y As Long)
         $Checking:Off
-        Shared FontSize As Vector2DType
-        Shared FontData() As String
-        Dim As Long uy, l, r, t, p, cidx, fc, bc
-        Dim ch As Unsigned Byte
+        Shared __CurPSF As PSFType
+        Dim As Long uy, l, r, t, p, cidx, bc, pm, cp
 
-        fc = DefaultColor
         bc = BackgroundColor
+        pm = PrintMode
 
         ' We will iterate through the whole text
-        For cidx = 1 To Len(sText)
-            ' Find the character to draw
-            ch = Asc(sText, cidx)
-            ' Calculate the starting x position for this character
-            l = x + (cidx - 1) * FontSize.x
-            ' Calculate right
-            r = l + FontSize.x - 1
+        For cidx = 1 To Len(text)
+            cp = Asc(text, cidx) ' find the character to draw
+            l = x + (cidx - 1) * __CurPSF.size.x ' calculate the starting x position for this character
+            r = l + __CurPSF.size.x - 1 ' calculate right
             ' Next go through each scan line and draw those
-            For uy = 1 To FontSize.y
+            For uy = 1 To __CurPSF.size.y
                 ' Get the scan line and prepare it
-                p = Asc(FontData(ch), uy)
+                p = Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + uy)
                 p = 256 * (p + (256 * (p > 127)))
                 ' Draw the scan line
                 t = y + uy - 1
-                Line (l, t)-(r, t), bc
-                Line (l, t)-(r, t), fc, , p
+                If pm = 3 Then Line (l, t)-(r, t), bc
+                Line (l, t)-(r, t), , , p
             Next
         Next
         $Checking:On
     End Sub
 
 
-    ' Return the onsreen length of a string in pixels
-    ' Just a convenience function
-    Function GetDrawStringWidth& (sText As String)
+    ' Returns the current font width
+    Function GetFontWidth~%%
         $Checking:Off
-        Shared FontSize As Vector2DType
-
-        GetDrawStringWidth = Len(sText) * FontSize.x
+        Shared __CurPSF As PSFType
+        GetFontWidth = __CurPSF.size.x
         $Checking:On
     End Function
 
 
+    ' Returns the current font height
+    Function GetFontHeight~%%
+        $Checking:Off
+        Shared __CurPSF As PSFType
+        GetFontHeight = __CurPSF.size.y
+        $Checking:On
+    End Function
+
+
+    ' Return the onsreen length of a string in pixels
+    Function GetDrawStringWidth& (text As String)
+        $Checking:Off
+        Shared __CurPSF As PSFType
+        GetDrawStringWidth = Len(text) * __CurPSF.size.x
+        $Checking:On
+    End Function
+
+
+    ' Set the active font
+    Sub SetCurrentFont (psf As PSFType)
+        $Checking:Off
+        Shared __CurPSF As PSFType
+        __CurPSF = psf
+        $Checking:On
+    End Sub
+
+
     ' Loads a font file from disk
-    Function ReadFont%% (sFile As String, ignoreMode As Byte)
-        Shared FontData() As String
-
-        ' Assume failure
-        ReadFont = FALSE
-
+    Function ReadFont%% (sFile As String, ignoreMode As Byte, psf As PSFType)
         If FileExists(sFile) Then
             Dim As Long hFile
 
@@ -153,13 +135,9 @@ $If VGAFONT_BAS = UNDEFINED Then
                 Exit Function
             End If
 
-            ' Set the height
-            ' This also sets the array
-            SetFontHeight i
-
-            For i = 0 To 255
-                Get hFile, , FontData(i)
-            Next
+            psf.size.x = 8 ' the width is always 8 for PSFv1
+            psf.size.y = i ' change the font height
+            psf.bitmap = Input$(256 * psf.size.y, hFile) ' the bitmap data in one go
 
             Close hFile
 
@@ -168,17 +146,115 @@ $If VGAFONT_BAS = UNDEFINED Then
     End Function
 
 
-    ' Saves the font file to disk in PSF v1 format
+    ' Changes the font height of the active font
+    ' This will wipe out whatever bitmap the font already has
+    Sub SetFontHeight (h As Unsigned Byte)
+        Shared __CurPSF As PSFType
+        __CurPSF.size.x = 8 ' the width is always 8 for PSFv1
+        __CurPSF.size.y = h ' change the font height
+        __CurPSF.bitmap = String$(256 * __CurPSF.size.y, NULL) ' just allocate enough space for the bitmap
+
+        ' Load default glyphs
+        Dim i As Long
+        For i = 0 To 255
+            SetGlyphDefaultBitmap i
+        Next
+    End Sub
+
+
+    ' Returns the entire bitmap of a glyph in a string
+    Function GetGlyphBitmap$ (cp As Unsigned Byte)
+        Shared __CurPSF As PSFType
+        GetGlyphBitmap = Mid$(__CurPSF.bitmap, 1 + __CurPSF.size.y * cp, __CurPSF.size.y)
+    End Function
+
+
+    ' Sets the entire bitmap of a glyph with bmp
+    Sub SetGlyphBitmap (cp As Unsigned Byte, bmp As String)
+        Shared __CurPSF As PSFType
+        Mid$(__CurPSF.bitmap, 1 + __CurPSF.size.y * cp, __CurPSF.size.y) = bmp
+    End Sub
+
+
+    ' Set the glyph's bitmap to QB64's current font glyph
+    Sub SetGlyphDefaultBitmap (cp As Unsigned Byte)
+        Shared __CurPSF As PSFType
+
+        Dim img As Long: img = NewImage(FontWidth, FontHeight, 32)
+        If img >= -1 Then Exit Sub ' leave if we failed to allocate the image
+
+        Dim dst As Long: dst = Dest ' save dest
+        Dest img ' set img as dest
+
+        Dim f As Long: f = Font ' save the current font
+
+        ' Select the best builtin font to use
+        Select Case __CurPSF.size.y
+            Case Is > 15
+                Font 16
+
+            Case Is > 13
+                Font 14
+
+            Case Else
+                Font 8
+        End Select
+
+        PrintString (0, 0), Chr$(cp) ' render the glyph to our image
+
+        ' Find the starting x, y on the font bitmap where we should start to render
+        Dim sx As Long: sx = __CurPSF.size.x \ 2 - FontWidth \ 2
+        Dim sy As Long: sy = __CurPSF.size.y \ 2 - FontHeight \ 2
+
+        Dim src As Long: src = Source ' save the old source
+        Source img ' change source to img
+
+        ' Copy the QB64 glyph
+        Dim As Long x, y
+        For y = 0 To FontHeight - 1
+            For x = 0 To FontWidth - 1
+                SetGlyphPixel cp, sx + x, sy + y, Point(x, y) <> Black
+            Next
+        Next
+
+        Source src ' restore source
+        Font f ' restore font
+        Dest dst
+        FreeImage img ' free img
+    End Sub
+
+
+    ' Return true if the pixel-bit at the glyphs x, y is set
+    Function GetGlyphPixel%% (cp As Unsigned Byte, x As Long, y As Long)
+        Shared __CurPSF As PSFType
+
+        If x < 0 Or x >= __CurPSF.size.x Or y < 0 Or y >= __CurPSF.size.y Then Exit Function
+
+        GetGlyphPixel = ReadBit(Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + y + 1), __CurPSF.size.x - x - 1)
+    End Function
+
+
+    ' Sets or unsets pixel at the glyphs x, y
+    Sub SetGlyphPixel (cp As Unsigned Byte, x As Long, y As Long, b As Byte)
+        Shared __CurPSF As PSFType
+
+        If x < 0 Or x >= __CurPSF.size.x Or y < 0 Or y >= __CurPSF.size.y Then Exit Sub
+
+        If Not b Then
+            Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + y + 1) = ResetBit(Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + y + 1), __CurPSF.size.x - x - 1)
+        Else
+            Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + y + 1) = SetBit(Asc(__CurPSF.bitmap, __CurPSF.size.y * cp + y + 1), __CurPSF.size.x - x - 1)
+        End If
+    End Sub
+
+
+    ' Saves the current font to disk in PSF v1 format
     ' This does not check if the file exists or whatever and will happily overwrite it
     ' It is the caller's resposibility to check this stuff
     Function WriteFont%% (sFile As String)
-        Shared FontSize As Vector2DType
-        Shared FontData() As String
+        Shared __CurPSF As PSFType
 
-        ' Assume failure
-        WriteFont = FALSE
-
-        If FontSize.x > 0 And FontSize.y > 0 Then
+        If __CurPSF.size.x > 0 And __CurPSF.size.y > 0 And Len(__CurPSF.bitmap) = 256 * __CurPSF.size.y Then ' check if the font is valid
             Dim As Long hFile
 
             ' Open the file for writing
@@ -196,15 +272,10 @@ $If VGAFONT_BAS = UNDEFINED Then
             Put hFile, , buffer
 
             ' Write font height
-            buffer = Chr$(FontSize.y)
+            buffer = Chr$(__CurPSF.size.y)
             Put hFile, , buffer
 
-            Dim i As Long
-
-            ' Write the font data
-            For i = 0 To 255
-                Put hFile, , FontData(i)
-            Next
+            Put hFile, , __CurPSF.bitmap ' write the font data
 
             Close hFile
 
