@@ -14,6 +14,8 @@
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
 ' METACOMMANDS
 '---------------------------------------------------------------------------------------------------------------------------------------------------------------
+$NoPrefix
+$Color:32
 $ExeIcon:'.\VGAFontEditor.ico'
 $VersionInfo:CompanyName=Samuel Gomes
 $VersionInfo:FileDescription=VGA Font Editor executable
@@ -128,7 +130,7 @@ Function DoWelcomeScreen%%
     Dest img
     Restore Data_vga_font_editor_logo_3_ans_3737
     Dim As String buffer: buffer = LoadResource
-    PrintANSI buffer, 0
+    PrintANSI buffer
 
     ' Capture rendered image to another image
     Dim As Long imgANSI: imgANSI = NewImage(80 * 8, 30 * 16, 32)
