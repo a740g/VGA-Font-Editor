@@ -4,5 +4,7 @@
 !*.*
 # Unignore all dirs
 !*/
+# Unignore include
+!include
 # Ignore all exe files
 *.exe
