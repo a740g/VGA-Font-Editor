@@ -1,20 +1,23 @@
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' VGA font editor
 ' Copyright (c) 2023 Samuel Gomes
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' HEADER FILES
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
-'$Include:'./include/Base64.bi'
-'$Include:'./include/ANSIPrint.bi'
-'$Include:'./include/VGAFont.bi'
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
+'$Include:'include/CRTLib.bi'
+'$Include:'include/FileOps.bi'
+'$Include:'include/Base64.bi'
+'$Include:'include/ANSIPrint.bi'
+'$Include:'include/VGAFont.bi'
+'-----------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' METACOMMANDS
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 $NoPrefix
+$Resize:Smooth
 $Color:32
 $ExeIcon:'.\VGAFontEditor.ico'
 $VersionInfo:CompanyName=Samuel Gomes
@@ -26,13 +29,13 @@ $VersionInfo:OriginalFilename=VGAFontEditor.exe
 $VersionInfo:ProductName=VGA Font Editor
 $VersionInfo:Web=https://github.com/a740g
 $VersionInfo:Comments=https://github.com/a740g
-$VersionInfo:FILEVERSION#=4,1,0,0
-$VersionInfo:ProductVersion=4,0,0,0
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+$VersionInfo:FILEVERSION#=4,1,1,0
+$VersionInfo:ProductVersion=4,1,1,0
+'-----------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' CONSTANTS
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 Const APP_NAME = "VGA Font Editor"
 ' Program events
 Const EVENT_NONE = 0
@@ -44,25 +47,26 @@ Const EVENT_CHOOSE = 5
 Const EVENT_EDIT = 6
 Const EVENT_PREVIEW = 7
 Const EVENT_SAVE = 8
+Const EVENT_IMPORT = 9
 ' Screen properties
 Const SCREEN_WIDTH = 640
 Const SCREEN_HEIGHT = 480
 ' FPS
 Const UPDATES_PER_SECOND = 30
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' GLOBAL VARIABLES
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 Dim Shared sFontFile As String ' the name of the font file we are viewing / editing
 Dim Shared ubFontCharacter As Unsigned Byte ' the glyph we are editing
 Dim Shared bFontChanged As Byte ' has the font changed?
 Dim Shared sClipboard As String ' our clipboard that holds a single glyph
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' PROGRAM ENTRY POINT
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ChDir StartDir$ ' change to the directory specifed by the environment
 ControlChr Off ' turn off control characters
 Screen NewImage(SCREEN_WIDTH, SCREEN_HEIGHT, 32) ' switch to graphics mode
@@ -79,6 +83,9 @@ Do
 
         Case EVENT_NEW
             event = DoNewFont
+
+        Case EVENT_IMPORT
+            event = DoImportFromAtlas
 
         Case EVENT_LOAD
             event = DoLoadFont
@@ -114,11 +121,11 @@ Do
 Loop
 
 System
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' FUNCTIONS AND SUBROUTINES
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 Function DoWelcomeScreen%%
     ' Save the current destination
     Dim As Long oldDest: oldDest = Dest
@@ -142,11 +149,12 @@ Function DoWelcomeScreen%%
     Color , Black
     Color Lime: Print "F1";: Color LightGray: Print " ............";: Color Yellow: Print " LOAD"
     Color Lime: Print "F2";: Color LightGray: Print " .............";: Color Yellow: Print " NEW"
+    Color Lime: Print "F3";: Color LightGray: Print " ..........";: Color Yellow: Print " IMPORT"
     Color Lime: Print "ENTER";: Color LightGray: Print " .......";: Color Yellow: Print " CHOOSE"
     Color Lime: Print "ESC";: Color LightGray: Print " ...........";: Color Yellow: Print " QUIT"
 
     ' Capture the rendered image
-    Dim As Long imgMenu: imgMenu = NewImage(20 * 8, 4 * 16, 32)
+    Dim As Long imgMenu: imgMenu = NewImage(20 * 8, 5 * 16, 32)
     PutImage (0, 0), img, imgMenu ' all excess stuff will get clipped
     ClearColor Black, imgMenu ' set all black pixels to be transparent
 
@@ -193,6 +201,9 @@ Function DoWelcomeScreen%%
             Case KEY_F2
                 e = EVENT_NEW
 
+            Case KEY_F3
+                e = EVENT_IMPORT
+
             Case KEY_ENTER
                 If GetFontHeight > 0 Then e = EVENT_CHOOSE
 
@@ -202,6 +213,8 @@ Function DoWelcomeScreen%%
             Case Else
                 e = EVENT_NONE
         End Select
+
+        If Exit > 0 Then e = EVENT_QUIT
     Loop While e = EVENT_NONE
 
     AutoDisplay
@@ -241,9 +254,12 @@ Function DoNewFont%%
     ubFontHeight = Val(InputBox$(APP_NAME, "Enter new font height in pixels (8 - 32):", Str$(ubFontHeight)))
 
     If ubFontHeight < 8 Or ubFontHeight > 32 Then
-        MessageBox APP_NAME, "Enter a valid font height!", "error"
+        If GetFontHeight <= 0 Then
+            DoNewFont = EVENT_NONE
+        Else
+            MessageBox APP_NAME, "Enter a valid font height!", "error"
+        End If
 
-        If GetFontHeight <= 0 Then DoNewFont = EVENT_NONE
         Exit Function
     End If
 
@@ -251,6 +267,80 @@ Function DoNewFont%%
     Title APP_NAME + " - UNTITLED"
     SetFontHeight ubFontHeight
     ResizeClipboard
+    bFontChanged = TRUE
+End Function
+
+
+' Imports a font from a font atlas (image)
+' The image format must be supported by QB64
+Function DoImportFromAtlas%%
+    ' Attempt to save the font if there is one
+    DoImportFromAtlas = DoSaveFont
+
+    Dim imgFileName As String: imgFileName = OpenFileDialog$(APP_NAME + ": Import")
+    If imgFileName = NULLSTRING Then
+        If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+        Exit Function
+    End If
+
+    Dim img As Long: img = LoadImage(imgFileName, 32) ' load as 32bpp image
+    If img >= -1 Then
+        MessageBox APP_NAME, "Failed to load image file: " + imgFileName, "error"
+        If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+        Exit Function ' leave if we failed to load the image
+    End If
+
+    Dim ubFontHeight As Long
+    Do
+        ubFontHeight = Val(InputBox$(APP_NAME, "Enter font height in pixels (8 - 32):", Str$(ubFontHeight)))
+        If ubFontHeight < 8 Or ubFontHeight > 32 Then
+            If ubFontHeight <= 0 Then ' user cancelled
+                FreeImage img ' free the image
+                If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+                Exit Function
+            End If
+
+            MessageBox APP_NAME, "Enter a valid font height!", "error"
+        End If
+    Loop While ubFontHeight < 8 Or ubFontHeight > 32
+
+    ' Ok we got the font height from the user
+    ' Create the atlas where we can copy from
+    Dim atlas As Long: atlas = NewImage(8 * 16, ubFontHeight * 16, 32)
+    If atlas >= -1 Then
+        MessageBox APP_NAME, "Failed to create font atlas image!", "error"
+        FreeImage img ' free the image
+        If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+        Exit Function ' leave if we failed to load the image
+    End If
+
+    ' Stretch blit the image on the atlas
+    PutImage , img, atlas
+
+    SetFontHeight ubFontHeight
+    ResizeClipboard
+
+    Dim src As Long: src = _Source ' save the old source
+    _Source atlas ' change source to atlas
+
+    ' Now copy all 256 characters
+    Dim As Long c, sx, sy, x, y
+    For c = 0 To 255
+        sx = (c Mod 16) * 8 ' starting x of char c
+        sy = (c \ 16) * ubFontHeight ' starting y of char c
+        For y = 0 To ubFontHeight - 1
+            For x = 0 To 7
+                SetGlyphPixel c, x, y, Point(sx + x, sy + y) <> Black
+            Next
+        Next
+    Next
+
+    _Source src ' restore source
+    FreeImage atlas
+    FreeImage img
+
+    sFontFile = NULLSTRING
+    Title APP_NAME + " - UNTITLED"
     bFontChanged = TRUE
 End Function
 
@@ -275,7 +365,7 @@ Function DoCommandLine%%
             Dim psf As PSFType
             If ReadFont(sFontFile, TRUE, psf) Then
                 SetCurrentFont psf
-                Title APP_NAME + " - " + GetFileNameFromPath(sFontFile)
+                Title APP_NAME + " - " + GetFileNameFromPathOrURL(sFontFile)
                 ResizeClipboard
             Else
                 MessageBox APP_NAME, "Failed to load " + sFontFile + "!", "error"
@@ -297,7 +387,7 @@ Function DoLoadFont%%
     DoLoadFont = DoSaveFont
 
     ' Get an existing font file name from the user
-    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", "", "*.psf|*.PSF|*.Psf", "PC Screen Font files")
+    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", , "*.psf|*.PSF|*.Psf", "PC Screen Font files")
 
     ' Exit if user canceled
     If tmpFilename = NULLSTRING Then
@@ -310,7 +400,7 @@ Function DoLoadFont%%
     If ReadFont(tmpFilename, TRUE, psf) Then
         SetCurrentFont psf
         sFontFile = tmpFilename
-        Title APP_NAME + " - " + GetFileNameFromPath(sFontFile)
+        Title APP_NAME + " - " + GetFileNameFromPathOrURL(sFontFile)
         ResizeClipboard
         bFontChanged = FALSE
     Else
@@ -330,7 +420,7 @@ Function DoSaveFont%%
             Dim tmpFilename As String
 
             ' Get a font file name from the user
-            tmpFilename = SaveFileDialog$(APP_NAME + ": Save", "", "*.psf|*.PSF|*.Psf", "Font files")
+            tmpFilename = SaveFileDialog$(APP_NAME + ": Save", , "*.psf|*.PSF|*.Psf", "Font files")
 
             ' Exit if user canceled
             If tmpFilename = NULLSTRING Then Exit Function
@@ -467,9 +557,6 @@ Function DoChooseCharacter%%
                 Exit Do
 
             Case KEY_ESCAPE
-                Dim e As Byte
-
-                e = DoSaveFont
                 DoChooseCharacter = EVENT_NONE
                 Exit Do
 
@@ -486,6 +573,8 @@ Function DoChooseCharacter%%
                     End If
                 End If
         End Select
+
+        If Exit > 0 Then DoChooseCharacter = EVENT_QUIT: Exit Do
     Loop
 End Function
 
@@ -653,8 +742,8 @@ Function DoEditCharacter%%
                 bFontChanged = TRUE
 
                 tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 0 To GetFontHeight - 1
-                    Asc(tmp, y + 1) = ReverseBitsInByte(Asc(tmp, y + 1))
+                For y = 1 To GetFontHeight
+                    Asc(tmp, y) = ReverseBitsByte(Asc(tmp, y))
                 Next
                 SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
@@ -673,8 +762,8 @@ Function DoEditCharacter%%
                 bFontChanged = TRUE
 
                 tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 0 To GetFontHeight - 1
-                    Asc(tmp, y + 1) = 255 - Asc(tmp, y + 1)
+                For y = 1 To GetFontHeight
+                    Asc(tmp, y) = 255 - Asc(tmp, y)
                 Next
                 SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
@@ -705,9 +794,9 @@ Function DoEditCharacter%%
                 bFontChanged = TRUE
 
                 tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 0 To GetFontHeight - 1
-                    sl = Asc(tmp, y + 1) ' Asc() returns integer instead of byte :(
-                    Asc(tmp, y + 1) = RoL(sl, 1)
+                For y = 1 To GetFontHeight
+                    sl = Asc(tmp, y) ' Asc() returns integer instead of byte :(
+                    Asc(tmp, y) = RoL(sl, 1)
                 Next
                 SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
@@ -718,9 +807,9 @@ Function DoEditCharacter%%
                 bFontChanged = TRUE
 
                 tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 0 To GetFontHeight - 1
-                    sl = Asc(tmp, y + 1) ' Asc() returns integer instead of byte :(
-                    Asc(tmp, y + 1) = RoR(sl, 1)
+                For y = 1 To GetFontHeight
+                    sl = Asc(tmp, y) ' Asc() returns integer instead of byte :(
+                    Asc(tmp, y) = RoR(sl, 1)
                 Next
                 SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
@@ -732,8 +821,8 @@ Function DoEditCharacter%%
 
                 tmp = GetGlyphBitmap(ubFontCharacter)
                 sl = Asc(tmp, 1)
-                For y = 0 To GetFontHeight - 2
-                    Asc(tmp, y + 1) = Asc(tmp, y + 2)
+                For y = 1 To GetFontHeight - 1
+                    Asc(tmp, y) = Asc(tmp, y + 1)
                 Next
                 Asc(tmp, GetFontHeight) = sl
                 SetGlyphBitmap ubFontCharacter, tmp
@@ -779,6 +868,8 @@ Function DoEditCharacter%%
                     End If
                 End If
         End Select
+
+        If Exit > 0 Then DoEditCharacter = EVENT_QUIT: Exit Do
     Loop
 End Function
 
@@ -811,7 +902,7 @@ Function DoShowPreview%%
 
     WaitInput
 
-    DoShowPreview = EVENT_CHOOSE
+    If Exit > 0 Then DoShowPreview = EVENT_QUIT Else DoShowPreview = EVENT_CHOOSE
 End Function
 
 
@@ -967,58 +1058,15 @@ Sub ClearInput
     Wend
     KeyClear
 End Sub
+'-----------------------------------------------------------------------------------------------------------------------
 
-
-' Reverses the order of bits in a byte: 10011101 becomes 10111001
-Function ReverseBitsInByte~%% (b As Unsigned Byte)
-    Dim r As Unsigned Byte: r = b
-    r = ShR(r And &B11110000, 4) Or ShL(r And &B00001111, 4)
-    r = ShR(r And &B11001100, 2) Or ShL(r And &B00110011, 2)
-    r = ShR(r And &B10101010, 1) Or ShL(r And &B01010101, 1)
-    ReverseBitsInByte = r
-End Function
-
-
-' Reverses the characters in a string
-Function ReverseString$ (s As String)
-    Dim t As String: t = Space$(Len(s))
-    Dim i As Long
-    For i = 1 To Len(s)
-        Asc(t, i) = Asc(s, 1 + Len(s) - i)
-    Next
-    ReverseString = t
-End Function
-
-
-' Gets the filename portion from a file path
-Function GetFileNameFromPath$ (pathName As String)
-    Dim i As Unsigned Long
-
-    ' Retrieve the position of the first / or \ in the parameter from the
-    For i = Len(pathName) To 1 Step -1
-        If KEY_SLASH = Asc(pathName, i) Or KEY_BACKSLASH = Asc(pathName, i) Then Exit For
-    Next
-
-    ' Return the full string if pathsep was not found
-    If i = 0 Then
-        GetFileNameFromPath = pathName
-    Else
-        GetFileNameFromPath = Right$(pathName, Len(pathName) - i)
-    End If
-End Function
-
-' Generates a random number between lo & hi
-Function RandomBetween& (lo As Long, hi As Long)
-    RandomBetween = lo + Rnd * (hi - lo)
-End Function
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
 ' MODULE FILES
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
-'$Include:'./include/Base64.bas'
-'$Include:'./include/ANSIPrint.bas'
-'$Include:'./include/VGAFont.bas'
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
-'---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+'-----------------------------------------------------------------------------------------------------------------------
+'$Include:'include/StringOps.bas'
+'$Include:'include/FileOps.bas'
+'$Include:'include/Base64.bas'
+'$Include:'include/ANSIPrint.bas'
+'$Include:'include/VGAFont.bas'
+'-----------------------------------------------------------------------------------------------------------------------
+'-----------------------------------------------------------------------------------------------------------------------
