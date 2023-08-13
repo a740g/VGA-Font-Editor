@@ -87,7 +87,7 @@ How is a character stored in memory?
 
 What are these PSF files?
 
-- These PSFs ([PC Screen Font](https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html)) were created using the bin2psf conversion tool from raw VGA ROM font dumps from various sources. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just a few bytes for the header.
+- These PSFs ([PC Screen Font](https://en.wikipedia.org/wiki/PC_Screen_Font)) were created using the bin2psf conversion tool from raw VGA ROM font dumps from various sources. These files are extemely small and suitable for embedded, memory limited or retro projects. The files are almost a raw dump of the VGA ROM font with just a few bytes for the header.
 
     ```text
     +--------------------------------------------+
