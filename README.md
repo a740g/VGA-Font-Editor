@@ -27,22 +27,24 @@ This is a cross-platform editor and library for VGA ROM fonts. This has code for
 
 ```VB
 ' For rendering
-Function ReadFont%% (sFile As String, ignoreMode As Byte, psf As PSFType)
-Sub SetCurrentFont (psf As PSFType)
-Function GetFontWidth~%%
-Function GetFontHeight~%%
-Function GetDrawStringWidth& (text As String)
-Sub DrawCharacter (cp As Unsigned Byte, x As Long, y As Long)
-Sub DrawString (text As String, x As Long, y As Long)
+FUNCTION PSF1_ReadFont%% (sFile As String, psf As PSFType)
+SUB PSF1_SetCurrentFont (psf As PSFType)
+FUNCTION PSF1_GetFontWidth~%%
+FUNCTION PSF1_GetFontHeight~%%
+FUNCTION PSF1_GetDrawStringWidth& (text As String)
+SUB PSF1_DrawCharacter (cp As Unsigned Byte, x As Long, y As Long)
+SUB PSF1_DrawString (text As String, x As Long, y As Long)
 
 ' Used by the editor
-Sub SetFontHeight (h As Unsigned Byte)
-Function GetGlyphBitmap$ (cp As Unsigned Byte)
-Sub SetGlyphBitmap (cp As Unsigned Byte, bmp As String)
-Sub SetGlyphDefaultBitmap (cp As Unsigned Byte)
-Function GetGlyphPixel%% (cp As Unsigned Byte, x As Long, y As Long)
-Sub SetGlyphPixel (cp As Unsigned Byte, x As Long, y As Long, b As Byte)
-Function WriteFont%% (sFile As String)
+SUB PSF1_SetFontHeight (h As Unsigned Byte)
+FUNCTION PSF1_GetFont$
+SUB PSF1_SetFont (buffer AS STRING)
+FUNCTION PSF1_GetGlyphBitmap$ (cp As Unsigned Byte)
+SUB PSF1_SetGlyphBitmap (cp As Unsigned Byte, bmp As String)
+FUNCTION PSF1_GetGlyphPixel%% (cp As Unsigned Byte, x As Long, y As Long)
+SUB PSF1_SetGlyphPixel (cp As Unsigned Byte, x As Long, y As Long, b As Byte)
+SUB PSF1_SetGlyphDefaultBitmap (cp As Unsigned Byte)
+FUNCTION PSF1_WriteFont%% (sFile As String)
 ```
 
 ## FAQ

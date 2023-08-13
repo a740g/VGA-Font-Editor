@@ -6,491 +6,550 @@
 '-----------------------------------------------------------------------------------------------------------------------
 ' HEADER FILES
 '-----------------------------------------------------------------------------------------------------------------------
-'$Include:'include/CRTLib.bi'
-'$Include:'include/FileOps.bi'
-'$Include:'include/Base64.bi'
-'$Include:'include/ANSIPrint.bi'
-'$Include:'include/VGAFont.bi'
+'$INCLUDE:'include/BitwiseOps.bi'
+'$INCLUDE:'include/MathOps.bi'
+'$INCLUDE:'include/StringOps.bi'
+'$INCLUDE:'include/FileOps.bi'
+'$INCLUDE:'include/TimeOps.bi'
+'$INCLUDE:'include/Base64.bi'
+'$INCLUDE:'include/ANSIPrint.bi'
+'$INCLUDE:'include/VGAFont.bi'
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
 ' METACOMMANDS
 '-----------------------------------------------------------------------------------------------------------------------
-$NoPrefix
-$Resize:Smooth
-$Color:32
-$ExeIcon:'.\VGAFontEditor.ico'
-$VersionInfo:CompanyName=Samuel Gomes
-$VersionInfo:FileDescription=VGA Font Editor executable
-$VersionInfo:InternalName=VGAFontEditor
-$VersionInfo:LegalCopyright=Copyright (c) 2023 Samuel Gomes
-$VersionInfo:LegalTrademarks=All trademarks are property of their respective owners
-$VersionInfo:OriginalFilename=VGAFontEditor.exe
-$VersionInfo:ProductName=VGA Font Editor
-$VersionInfo:Web=https://github.com/a740g
-$VersionInfo:Comments=https://github.com/a740g
-$VersionInfo:FILEVERSION#=4,1,1,0
-$VersionInfo:ProductVersion=4,1,1,0
+$NOPREFIX
+$RESIZE:SMOOTH
+$COLOR:32
+$EXEICON:'.\VGAFontEditor.ico'
+$VERSIONINFO:CompanyName=Samuel Gomes
+$VERSIONINFO:FileDescription=VGA Font Editor executable
+$VERSIONINFO:InternalName=VGAFontEditor
+$VERSIONINFO:LegalCopyright=Copyright (c) 2023 Samuel Gomes
+$VERSIONINFO:LegalTrademarks=All trademarks are property of their respective owners
+$VERSIONINFO:OriginalFilename=VGAFontEditor.exe
+$VERSIONINFO:ProductName=VGA Font Editor
+$VERSIONINFO:Web=https://github.com/a740g
+$VERSIONINFO:Comments=https://github.com/a740g
+$VERSIONINFO:FILEVERSION#=4,2,0,0
+$VERSIONINFO:ProductVersion=4,2,0,0
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
 ' CONSTANTS
 '-----------------------------------------------------------------------------------------------------------------------
-Const APP_NAME = "VGA Font Editor"
+CONST APP_NAME = "VGA Font Editor"
 ' Program events
-Const EVENT_NONE = 0
-Const EVENT_QUIT = 1
-Const EVENT_COMMAND = 2
-Const EVENT_NEW = 3
-Const EVENT_LOAD = 4
-Const EVENT_CHOOSE = 5
-Const EVENT_EDIT = 6
-Const EVENT_PREVIEW = 7
-Const EVENT_SAVE = 8
-Const EVENT_IMPORT = 9
+CONST EVENT_NONE = 0
+CONST EVENT_QUIT = 1
+CONST EVENT_COMMAND = 2
+CONST EVENT_NEW = 3
+CONST EVENT_LOAD = 4
+CONST EVENT_CHOOSE = 5
+CONST EVENT_EDIT = 6
+CONST EVENT_PREVIEW = 7
+CONST EVENT_SAVE = 8
+CONST EVENT_IMPORT = 9
+' Font metric limits
+CONST FONT_WIDTH = 8
+CONST FONT_HEIGHT_MIN = 8
+CONST FONT_HEIGHT_MAX = 32
 ' Screen properties
-Const SCREEN_WIDTH = 640
-Const SCREEN_HEIGHT = 480
+CONST SCREEN_WIDTH = 640
+CONST SCREEN_HEIGHT = 480
 ' FPS
-Const UPDATES_PER_SECOND = 30
+CONST UPDATES_PER_SECOND = 30
+' Blinky stuff
+CONST BLINK_TICKS = 300
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
 ' GLOBAL VARIABLES
 '-----------------------------------------------------------------------------------------------------------------------
-Dim Shared sFontFile As String ' the name of the font file we are viewing / editing
-Dim Shared ubFontCharacter As Unsigned Byte ' the glyph we are editing
-Dim Shared bFontChanged As Byte ' has the font changed?
-Dim Shared sClipboard As String ' our clipboard that holds a single glyph
+DIM SHARED sFontFile AS STRING ' the name of the font file we are viewing / editing
+DIM SHARED ubFontCharacter AS UNSIGNED BYTE ' the glyph we are editing
+DIM SHARED bFontChanged AS BYTE ' has the font changed?
+DIM SHARED sClipboard AS STRING ' our clipboard that holds a single glyph
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
 ' PROGRAM ENTRY POINT
 '-----------------------------------------------------------------------------------------------------------------------
-ChDir StartDir$ ' change to the directory specifed by the environment
-ControlChr Off ' turn off control characters
-Screen NewImage(SCREEN_WIDTH, SCREEN_HEIGHT, 32) ' switch to graphics mode
-Title APP_NAME + " " + OS$ ' set app title
-AllowFullScreen SquarePixels , Smooth ' Allow the program window to run fullscreen with Alt+Enter
+CHDIR STARTDIR$ ' change to the directory specifed by the environment
+CONTROLCHR OFF ' turn off control characters
+SCREEN NEWIMAGE(SCREEN_WIDTH, SCREEN_HEIGHT, 32) ' switch to graphics mode
+SetWindowTitle ' set app title
+ALLOWFULLSCREEN SQUAREPIXELS , SMOOTH ' allow the program window to run fullscreen with Alt+Enter
+SetRandomSeed TIMER ' seed randomizer
 
-Dim event As Byte: event = EVENT_COMMAND ' default's to command line event on program entry
+DIM event AS BYTE: event = EVENT_COMMAND ' default's to command line event on program entry
 
 ' Event loop
-Do
-    Select Case event
-        Case EVENT_COMMAND
-            event = DoCommandLine
+DO
+    SELECT CASE event
+        CASE EVENT_COMMAND
+            event = OnCommandLine
 
-        Case EVENT_NEW
-            event = DoNewFont
+        CASE EVENT_NEW
+            event = OnNewFont
 
-        Case EVENT_IMPORT
-            event = DoImportFromAtlas
+        CASE EVENT_IMPORT
+            event = OnImportAtlas
 
-        Case EVENT_LOAD
-            event = DoLoadFont
+        CASE EVENT_LOAD
+            event = OnLoadFont
 
-        Case EVENT_SAVE
-            event = DoSaveFont
+        CASE EVENT_SAVE
+            event = OnSaveFont
 
-        Case EVENT_CHOOSE
-            event = DoChooseCharacter
+        CASE EVENT_CHOOSE
+            event = OnChooseCharacter
 
-        Case EVENT_EDIT
-            event = DoEditCharacter
+        CASE EVENT_EDIT
+            event = OnEditCharacter
 
-        Case EVENT_PREVIEW
-            event = DoShowPreview
+        CASE EVENT_PREVIEW
+            event = OnShowPreview
 
-        Case EVENT_QUIT
-            If bFontChanged Then
+        CASE EVENT_QUIT
+            IF bFontChanged THEN
                 ' Attempt to save the changes
-                event = DoSaveFont
+                event = OnSaveFont
 
                 ' Check the user really wants to quit
-                If MessageBox(APP_NAME, "Are you sure you want to quit?", "yesno", "question") = 1 Then
-                    Exit Do
-                End If
-            Else
-                Exit Do
-            End If
+                IF MESSAGEBOX(APP_NAME, "Are you sure you want to quit?", "yesno", "question") = 1 THEN
+                    EXIT DO
+                END IF
+            ELSE
+                EXIT DO
+            END IF
 
-        Case Else
-            event = DoWelcomeScreen
-    End Select
-Loop
+        CASE ELSE
+            event = OnWelcomeScreen
+    END SELECT
+LOOP
 
-System
+SYSTEM
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
 ' FUNCTIONS AND SUBROUTINES
 '-----------------------------------------------------------------------------------------------------------------------
-Function DoWelcomeScreen%%
+FUNCTION OnWelcomeScreen%%
     ' Save the current destination
-    Dim As Long oldDest: oldDest = Dest
+    DIM oldDest AS LONG: oldDest = DEST
+
+    ' Save the old print mode
+    DIM oldPM AS LONG: oldPM = PRINTMODE
 
     ' Now create a new image
-    Dim As Long img: img = NewImage(80 * 8, 31 * 16, 32) ' we'll allocate some extra height to avoid any scrolling
+    DIM img AS LONG: img = NEWIMAGE(80 * FONT_WIDTH, 31 * 16, 32) ' we'll allocate some extra height to avoid any scrolling
 
     ' Change destination and render the ANSI art
-    Dest img
-    Restore Data_vga_font_editor_logo_3_ans_3737
-    Dim As String buffer: buffer = LoadResource
+    DEST img
+    RESTORE Data_vga_font_editor_logo_3_ans_3737
+    DIM buffer AS STRING: buffer = LoadResource
     PrintANSI buffer
 
     ' Capture rendered image to another image
-    Dim As Long imgANSI: imgANSI = NewImage(80 * 8, 30 * 16, 32)
-    PutImage (0, 0), img, imgANSI ' any excess height will simply get clipped
-    ClearColor Black, imgANSI ' set all black pixels to be transparent
+    DIM imgANSI AS LONG: imgANSI = NEWIMAGE(80 * FONT_WIDTH, 30 * 16, 32)
+    PUTIMAGE (0, 0), img, imgANSI ' any excess height will simply get clipped
+    CLEARCOLOR Black, imgANSI ' set all black pixels to be transparent
 
     ' Render the menu
-    Cls , Black
-    Color , Black
-    Color Lime: Print "F1";: Color LightGray: Print " ............";: Color Yellow: Print " LOAD"
-    Color Lime: Print "F2";: Color LightGray: Print " .............";: Color Yellow: Print " NEW"
-    Color Lime: Print "F3";: Color LightGray: Print " ..........";: Color Yellow: Print " IMPORT"
-    Color Lime: Print "ENTER";: Color LightGray: Print " .......";: Color Yellow: Print " CHOOSE"
-    Color Lime: Print "ESC";: Color LightGray: Print " ...........";: Color Yellow: Print " QUIT"
+    CLS , RGBA32(255, 255, 255, 102) ' clear the image to a translucent white
+    PRINTMODE KEEPBACKGROUND
+    COLOR , Black
+    COLOR Lime: PRINT "F1";: COLOR LightGray: PRINT " ............";: COLOR Yellow: PRINT " LOAD"
+    COLOR Lime: PRINT "F2";: COLOR LightGray: PRINT " .............";: COLOR Yellow: PRINT " NEW"
+    COLOR Lime: PRINT "F3";: COLOR LightGray: PRINT " ..........";: COLOR Yellow: PRINT " IMPORT"
+    COLOR Lime: PRINT "ENTER";: COLOR LightGray: PRINT " .......";: COLOR Yellow: PRINT " CHOOSE"
+    COLOR Lime: PRINT "ESC";: COLOR LightGray: PRINT " ...........";: COLOR Yellow: PRINT " QUIT"
 
     ' Capture the rendered image
-    Dim As Long imgMenu: imgMenu = NewImage(20 * 8, 5 * 16, 32)
-    PutImage (0, 0), img, imgMenu ' all excess stuff will get clipped
-    ClearColor Black, imgMenu ' set all black pixels to be transparent
+    DIM imgMenu AS LONG: imgMenu = NEWIMAGE(20 * FONT_WIDTH, 5 * 16, 32)
+    PUTIMAGE (0, 0), img, imgMenu ' all excess stuff will get clipped
 
     ' Do some cleanup
-    Dest oldDest
-    FreeImage img
+    SELECT CASE oldPM
+        CASE 1
+            PRINTMODE KEEPBACKGROUND
+        CASE 2
+            PRINTMODE ONLYBACKGROUND
+        CASE ELSE
+            PRINTMODE FILLBACKGROUND
+    END SELECT
+    DEST oldDest
+    FREEIMAGE img
 
-    Const STAR_COUNT = 1024 ' the maximum stars that we can show
-    Dim As Single starX(1 To STAR_COUNT), starY(1 To STAR_COUNT), starZ(1 To STAR_COUNT)
-    Dim As Unsigned Long starC(1 To STAR_COUNT)
-    Dim As Long i, k
-    Dim As Byte e
+    CONST STAR_COUNT = 1024 ' the maximum stars that we can show
+    DIM starP(1 TO STAR_COUNT) AS Vector3FType
+    DIM starC(1 TO STAR_COUNT) AS UNSIGNED LONG
+    DIM AS LONG i, k
+    DIM e AS BYTE
 
-    Do
-        Cls , Black ' clear the page
+    FOR i = 1 TO STAR_COUNT
+        starP(i).x = -1! ' this will let the below logic to kick-in
+    NEXT
 
-        For i = 1 To STAR_COUNT
-            If starX(i) < 1 Or starX(i) >= Width Or starY(i) < 1 Or starY(i) >= Height Then
-                starX(i) = RandomBetween(0, Width - 1)
-                starY(i) = RandomBetween(0, Height - 1)
-                starZ(i) = 4096
-                starC(i) = RGB32(RandomBetween(64, 255), RandomBetween(64, 255), RandomBetween(64, 255))
-            End If
+    ' No need to calculate this again and again
+    CONST SCREEN_HALF_WIDTH = SCREEN_WIDTH / 2
+    CONST SCREEN_HALF_HEIGHT = SCREEN_HEIGHT / 2
 
-            PSet (starX(i), starY(i)), starC(i)
+    DO
+        CLS , Black ' clear the page
 
-            starZ(i) = starZ(i) + 0.5
-            starX(i) = ((starX(i) - (Width / 2)) * (starZ(i) / 4096)) + (Width / 2)
-            starY(i) = ((starY(i) - (Height / 2)) * (starZ(i) / 4096)) + (Height / 2)
-        Next
+        FOR i = 1 TO STAR_COUNT
+            IF starP(i).x < 0 OR starP(i).x >= SCREEN_WIDTH OR starP(i).y < 0 OR starP(i).y >= SCREEN_HEIGHT THEN
+                starP(i).x = GetRandomBetween(0, SCREEN_WIDTH - 1)
+                starP(i).y = GetRandomBetween(0, SCREEN_HEIGHT - 1)
+                starP(i).z = 4096!
+                starC(i) = RGB32(GetRandomBetween(64, 255), GetRandomBetween(64, 255), GetRandomBetween(64, 255))
+            END IF
 
-        PutImage (0, 0), imgANSI
-        PutImage (SCREEN_WIDTH \ 2 - Width(imgMenu) \ 2, SCREEN_HEIGHT \ 2 - Height(imgMenu) \ 2), imgMenu
+            PSET (starP(i).x, starP(i).y), starC(i)
 
-        Limit UPDATES_PER_SECOND
-        Display
+            starP(i).z = starP(i).z + 0.5!
+            starP(i).x = ((starP(i).x - SCREEN_HALF_WIDTH) * (starP(i).z / 4096!)) + SCREEN_HALF_WIDTH
+            starP(i).y = ((starP(i).y - SCREEN_HALF_HEIGHT) * (starP(i).z / 4096!)) + SCREEN_HALF_HEIGHT
+        NEXT
 
-        k = KeyHit
+        PUTIMAGE (0, 0), imgANSI
+        PUTIMAGE (SCREEN_HALF_WIDTH - WIDTH(imgMenu) \ 2, SCREEN_HALF_HEIGHT - HEIGHT(imgMenu) \ 2), imgMenu
 
-        Select Case k
-            Case KEY_F1
+        LIMIT UPDATES_PER_SECOND
+        DISPLAY
+
+        k = KEYHIT
+
+        SELECT CASE k
+            CASE KEY_F1
                 e = EVENT_LOAD
 
-            Case KEY_F2
+            CASE KEY_F2
                 e = EVENT_NEW
 
-            Case KEY_F3
+            CASE KEY_F3
                 e = EVENT_IMPORT
 
-            Case KEY_ENTER
-                If GetFontHeight > 0 Then e = EVENT_CHOOSE
+            CASE KEY_ENTER
+                IF PSF1_GetFontHeight > 0 THEN e = EVENT_CHOOSE
 
-            Case KEY_ESCAPE
+            CASE KEY_ESCAPE
                 e = EVENT_QUIT
 
-            Case Else
+            CASE ELSE
                 e = EVENT_NONE
-        End Select
+        END SELECT
 
-        If Exit > 0 Then e = EVENT_QUIT
-    Loop While e = EVENT_NONE
+        IF EXIT > 0 THEN e = EVENT_QUIT
+    LOOP WHILE e = EVENT_NONE
 
-    AutoDisplay
+    AUTODISPLAY
 
     ' Do some cleanup
-    FreeImage imgMenu
-    FreeImage imgANSI
+    FREEIMAGE imgMenu
+    FREEIMAGE imgANSI
 
-    DoWelcomeScreen = e
+    OnWelcomeScreen = e
 
     Data_vga_font_editor_logo_3_ans_3737:
-    Data 3737,1064,-1
-    Data eJyVV91t4zAMfi/QCfKi28Cpk/Yho2SAAgd4N0fr0LZWOYmk+CPZMU4BKomkyI9/knt5DtPnR7BjvjzH
-    Data 4XH7mWJe/DxuwxT+Z/THnX7Lvj7GPEcAuDzFSiFnNiA1n4ZMW/IqS0IdyFhUKSC/cGIsqk4woJFJDpEZ
-    Data D6HlMgRwg2CYg/5kPfv5YUXEyXGctiwwqqsr8joiVAKpSzgaIuvVs3K8WkeTX1ONNSNw22vH3THS0XaR
-    Data 7MPznoHfssQOCtjxgBL63gshlLBcfZx7ElSKg6xja/hefmW/96AXrGfx5k1uCIUNHmPYw+hFoBB8/RdN
-    Data XRO32FvfUPHwsKAOKqRNxqFPzL9jMu428h2B8N19bzY+3cvMx2y9B1Unvnhtazh1TxJ25E2e7ta3vPgm
-    Data KIH+Yingwl4YQpTZK2qNNJDOUPCR72kTi6tBgtdGGXkOm8VFYhiSAzQUkWPjebo5KMZn465d+rsUWh3H
-    Data kZFQvLOPpFEisfLlobnna3LBwfVTRVhg42DVwK2NxG36/fuHTFo0zVujiRn0Zq5QysFhSk0sKh+ZbFlO
-    Data EHUTuZ3nxZos7fA1cTNgC9TdWiWTFzEp2TRvnLH1yJy4mNXcpNliLxedAD8geydEkBiHhs9GeZTn+dJ/
-    Data 6dSx8DfHooPvEnzKeXO0lg1+C1w1S6jRPm1s4swb/IiAmOrACLFys6LHpjedEya2B/yLziVOL/KSY72F
-    Data RIpJngzThWRCdXUB4QrWAEHcAwowm1KLrfEK7X0ikrOrH4gxvrL2Jf+ylRhSDyBHqUQ2YHmndJ4OJURY
-    Data 0pIJdNT5ymIOldlYK67YXIQxW0lTNIXKtJJlieVht5IYUUNhSmgShTX7S20HOktXHZi8zCGTTJrmNss+
-    Data zyGEpqxU9CAIZDsCoSvZiJiTF3/SVw1BXq4QeRXn2lBsBDtF2yPOvaGKYzF9Cfwe53yGQEvKLGhgIdkN
-    Data F40a00KFtG9Uy940UpBOKrsFI99AAC5q7uq+Z41H9uaKr1d1H2+/18s7Dnqu7uU9Tj72kfFgZQP/kBTl
-    Data cTRjr5G6DnozIv+79A8QGpjU
-End Function
+    DATA 3737,1064,-1
+    DATA eJyVV91t4zAMfi/QCfKi28Cpk/Yho2SAAgd4N0fr0LZWOYmk+CPZMU4BKomkyI9/knt5DtPnR7BjvjzH
+    DATA 4XH7mWJe/DxuwxT+Z/THnX7Lvj7GPEcAuDzFSiFnNiA1n4ZMW/IqS0IdyFhUKSC/cGIsqk4woJFJDpEZ
+    DATA D6HlMgRwg2CYg/5kPfv5YUXEyXGctiwwqqsr8joiVAKpSzgaIuvVs3K8WkeTX1ONNSNw22vH3THS0XaR
+    DATA 7MPznoHfssQOCtjxgBL63gshlLBcfZx7ElSKg6xja/hefmW/96AXrGfx5k1uCIUNHmPYw+hFoBB8/RdN
+    DATA XRO32FvfUPHwsKAOKqRNxqFPzL9jMu428h2B8N19bzY+3cvMx2y9B1Unvnhtazh1TxJ25E2e7ta3vPgm
+    DATA KIH+Yingwl4YQpTZK2qNNJDOUPCR72kTi6tBgtdGGXkOm8VFYhiSAzQUkWPjebo5KMZn465d+rsUWh3H
+    DATA kZFQvLOPpFEisfLlobnna3LBwfVTRVhg42DVwK2NxG36/fuHTFo0zVujiRn0Zq5QysFhSk0sKh+ZbFlO
+    DATA EHUTuZ3nxZos7fA1cTNgC9TdWiWTFzEp2TRvnLH1yJy4mNXcpNliLxedAD8geydEkBiHhs9GeZTn+dJ/
+    DATA 6dSx8DfHooPvEnzKeXO0lg1+C1w1S6jRPm1s4swb/IiAmOrACLFys6LHpjedEya2B/yLziVOL/KSY72F
+    DATA RIpJngzThWRCdXUB4QrWAEHcAwowm1KLrfEK7X0ikrOrH4gxvrL2Jf+ylRhSDyBHqUQ2YHmndJ4OJURY
+    DATA 0pIJdNT5ymIOldlYK67YXIQxW0lTNIXKtJJlieVht5IYUUNhSmgShTX7S20HOktXHZi8zCGTTJrmNss+
+    DATA zyGEpqxU9CAIZDsCoSvZiJiTF3/SVw1BXq4QeRXn2lBsBDtF2yPOvaGKYzF9Cfwe53yGQEvKLGhgIdkN
+    DATA F40a00KFtG9Uy940UpBOKrsFI99AAC5q7uq+Z41H9uaKr1d1H2+/18s7Dnqu7uU9Tj72kfFgZQP/kBTl
+    DATA cTRjr5G6DnozIv+79A8QGpjU
+END FUNCTION
 
 
 ' Creates an empty font file
-Function DoNewFont%%
-    Dim ubFontHeight As Long
+FUNCTION OnNewFont%%
+    DIM ubFontHeight AS LONG
 
     ' Attempt to save the font if there is one
-    DoNewFont = DoSaveFont
+    OnNewFont = OnSaveFont
 
-    ubFontHeight = Val(InputBox$(APP_NAME, "Enter new font height in pixels (8 - 32):", Str$(ubFontHeight)))
+    ubFontHeight = VAL(INPUTBOX$(APP_NAME, "Enter new font height in pixels (8 - 32):", STR$(ubFontHeight)))
 
-    If ubFontHeight < 8 Or ubFontHeight > 32 Then
-        If GetFontHeight <= 0 Then
-            DoNewFont = EVENT_NONE
-        Else
-            MessageBox APP_NAME, "Enter a valid font height!", "error"
-        End If
+    IF ubFontHeight < FONT_HEIGHT_MIN OR ubFontHeight > FONT_HEIGHT_MAX THEN
+        IF PSF1_GetFontHeight <= 0 THEN
+            OnNewFont = EVENT_NONE
+        ELSE
+            MESSAGEBOX APP_NAME, "Enter a valid font height!", "error"
+        END IF
 
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-    sFontFile = NULLSTRING
-    Title APP_NAME + " - UNTITLED"
-    SetFontHeight ubFontHeight
-    ResizeClipboard
+    sFontFile = EMPTY_STRING
     bFontChanged = TRUE
-End Function
+    PSF1_SetFontHeight ubFontHeight
+    ResizeClipboard
+    SetWindowTitle
+END FUNCTION
+
+
+' Imports a font from a raw VGA font dump (like bin2psf.bas)
+FUNCTION ImportRaw%% (fileName AS STRING)
+    ImportRaw = TRUE ' assume success
+
+    DIM h AS LONG: h = GetFileSize(fileName) ' get the file size
+
+    ' Basic check: The raw font should be completely divisible by 256
+    IF h = 0 OR h MOD 256 <> 0 THEN
+        ImportRaw = FALSE
+        EXIT FUNCTION
+    END IF
+
+    DIM buffer AS STRING: buffer = LoadFile(fileName) ' load the whole file into memory
+    PSF1_SetFont buffer ' set the font data. This also sets the font height
+    ResizeClipboard
+    sFontFile = EMPTY_STRING
+    bFontChanged = TRUE
+    SetWindowTitle
+END FUNCTION
 
 
 ' Imports a font from a font atlas (image)
 ' The image format must be supported by QB64
-Function DoImportFromAtlas%%
+FUNCTION OnImportAtlas%%
     ' Attempt to save the font if there is one
-    DoImportFromAtlas = DoSaveFont
+    OnImportAtlas = OnSaveFont
 
-    Dim imgFileName As String: imgFileName = OpenFileDialog$(APP_NAME + ": Import")
-    If imgFileName = NULLSTRING Then
-        If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
-        Exit Function
-    End If
+    DIM imgFileName AS STRING: imgFileName = OPENFILEDIALOG$(APP_NAME + ": Import")
+    IF LEN(imgFileName) = NULL THEN
+        IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' do nothing if no font file is loaded
+        EXIT FUNCTION
+    END IF
 
-    Dim img As Long: img = LoadImage(imgFileName, 32) ' load as 32bpp image
-    If img >= -1 Then
-        MessageBox APP_NAME, "Failed to load image file: " + imgFileName, "error"
-        If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
-        Exit Function ' leave if we failed to load the image
-    End If
+    DIM img AS LONG: img = LOADIMAGE(imgFileName, 256) ' load as 8bpp image
+    IF img >= -1 THEN
+        ' Loading image failed, assume it is a raw ROM font dump and import it
+        IF NOT ImportRaw(imgFileName) THEN
+            MESSAGEBOX APP_NAME, "Failed to load image / raw font dump: " + imgFileName, "error"
+        END IF
 
-    Dim ubFontHeight As Long
-    Do
-        ubFontHeight = Val(InputBox$(APP_NAME, "Enter font height in pixels (8 - 32):", Str$(ubFontHeight)))
-        If ubFontHeight < 8 Or ubFontHeight > 32 Then
-            If ubFontHeight <= 0 Then ' user cancelled
-                FreeImage img ' free the image
-                If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
-                Exit Function
-            End If
+        IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' do nothing if no font file is loaded
+        EXIT FUNCTION
+    END IF
 
-            MessageBox APP_NAME, "Enter a valid font height!", "error"
-        End If
-    Loop While ubFontHeight < 8 Or ubFontHeight > 32
+    ' Calculate the optimal font height (font width is always 8)
+    DIM fntHeight AS LONG: fntHeight = (HEIGHT(img) * FONT_WIDTH) / WIDTH(img)
 
-    ' Ok we got the font height from the user
+    ' Check for insane values
+    IF fntHeight < FONT_HEIGHT_MIN OR fntHeight > FONT_HEIGHT_MAX THEN
+        MESSAGEBOX APP_NAME, "Font height too large or small!", "error"
+        FREEIMAGE img ' free the image
+        IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+        EXIT FUNCTION ' leave if we failed to load the image
+    END IF
+
     ' Create the atlas where we can copy from
-    Dim atlas As Long: atlas = NewImage(8 * 16, ubFontHeight * 16, 32)
-    If atlas >= -1 Then
-        MessageBox APP_NAME, "Failed to create font atlas image!", "error"
-        FreeImage img ' free the image
-        If GetFontHeight <= 0 Then DoImportFromAtlas = EVENT_NONE ' Do nothing if no font file is loaded
-        Exit Function ' leave if we failed to load the image
-    End If
+    DIM atlas AS LONG: atlas = NEWIMAGE(FONT_WIDTH * 16, fntHeight * 16, 256)
+    IF atlas >= -1 THEN
+        MESSAGEBOX APP_NAME, "Failed to create font atlas image!", "error"
+        FREEIMAGE img ' free the image
+        IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+        EXIT FUNCTION ' leave if we failed to load the image
+    END IF
 
-    ' Stretch blit the image on the atlas
-    PutImage , img, atlas
+    DIM src AS LONG: src = SOURCE ' save the old source
 
-    SetFontHeight ubFontHeight
+    ' Check if the atlas has some weird color-key and if so change it to black
+    SOURCE img ' set img as the source for POINT to work
+    CLEARCOLOR POINT(WIDTH(img) - 1, HEIGHT(img) - 1), img ' change the color we get from the last pixel to transparent
+
+    PUTIMAGE , img, atlas ' stretch blit the image on the atlas
+
+    PSF1_SetFontHeight fntHeight
     ResizeClipboard
 
-    Dim src As Long: src = _Source ' save the old source
-    _Source atlas ' change source to atlas
+    SOURCE atlas ' change source to atlas
 
     ' Now copy all 256 characters
-    Dim As Long c, sx, sy, x, y
-    For c = 0 To 255
-        sx = (c Mod 16) * 8 ' starting x of char c
-        sy = (c \ 16) * ubFontHeight ' starting y of char c
-        For y = 0 To ubFontHeight - 1
-            For x = 0 To 7
-                SetGlyphPixel c, x, y, Point(sx + x, sy + y) <> Black
-            Next
-        Next
-    Next
+    DIM AS LONG c, sx, sy, x, y
+    FOR c = 0 TO 255
+        sx = (c MOD 16) * FONT_WIDTH ' starting x of char c
+        sy = (c \ 16) * fntHeight ' starting y of char c
+        FOR y = 0 TO fntHeight - 1
+            FOR x = 0 TO FONT_WIDTH - 1
+                PSF1_SetGlyphPixel c, x, y, POINT(sx + x, sy + y) <> 0
+            NEXT
+        NEXT
+    NEXT
 
-    _Source src ' restore source
-    FreeImage atlas
-    FreeImage img
+    SOURCE src ' restore source
+    FREEIMAGE atlas
+    FREEIMAGE img
 
-    sFontFile = NULLSTRING
-    Title APP_NAME + " - UNTITLED"
+    sFontFile = EMPTY_STRING
     bFontChanged = TRUE
-End Function
+    SetWindowTitle
+END FUNCTION
 
 
 ' Handles and command line parameters
-Function DoCommandLine%%
-    DoCommandLine = EVENT_NONE ' Default to no event
+FUNCTION OnCommandLine%%
+    OnCommandLine = EVENT_NONE ' Default to no event
 
     ' Check if any help is needed
-    If Command$(1) = "/?" Or Command$(1) = "-?" Then
-        MessageBox APP_NAME, APP_NAME + Chr$(13) + "Syntax: EDITFONT [fontfile.psf]" + Chr$(13) + "    /?: Shows this message" + String$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" + String$(2, 13) + "https://github.com/a740g/", "info"
-        DoCommandLine = EVENT_QUIT
-        Exit Function ' Exit the function and allow the main loop to handle the quit event
-    End If
+    IF COMMAND$(1) = "/?" OR COMMAND$(1) = "-?" THEN
+        MESSAGEBOX APP_NAME, APP_NAME + CHR$(13) + "Syntax: EDITFONT [fontfile.psf]" _
+            + CHR$(13) + "    /?: Shows this message" _
+            + STRING$(2, 13) + "Copyright (c) 1998-2022, Samuel Gomes" _
+            + STRING$(2, 13) + "https://github.com/a740g/", "info"
+        OnCommandLine = EVENT_QUIT
+        EXIT FUNCTION ' Exit the function and allow the main loop to handle the quit event
+    END IF
 
     ' Fetch the file name from the command line
-    sFontFile = Command$(1)
+    sFontFile = COMMAND$(1)
 
-    If sFontFile <> NULLSTRING Then
-        If FileExists(sFontFile) Then
+    IF LEN(sFontFile) <> NULL THEN
+        IF FILEEXISTS(sFontFile) THEN
             ' Read in the font
-            Dim psf As PSFType
-            If ReadFont(sFontFile, TRUE, psf) Then
-                SetCurrentFont psf
-                Title APP_NAME + " - " + GetFileNameFromPathOrURL(sFontFile)
+            DIM psf AS PSF1Type
+            IF PSF1_ReadFont(sFontFile, psf) THEN
+                PSF1_SetCurrentFont psf
                 ResizeClipboard
-            Else
-                MessageBox APP_NAME, "Failed to load " + sFontFile + "!", "error"
-                sFontFile = NULLSTRING
-            End If
-        Else
+                SetWindowTitle
+            ELSE
+                MESSAGEBOX APP_NAME, "Failed to load " + sFontFile + "!", "error"
+                sFontFile = EMPTY_STRING
+            END IF
+        ELSE
             ' If this is a new file ask use for specs
-            DoCommandLine = DoNewFont
-        End If
-    End If
-End Function
+            OnCommandLine = OnNewFont
+        END IF
+    END IF
+END FUNCTION
 
 
 ' This is called when a font has to be loaded
-Function DoLoadFont%%
-    Dim tmpFilename As String
+FUNCTION OnLoadFont%%
+    DIM tmpFilename AS STRING
 
     ' Attempt to save the font if there is one
-    DoLoadFont = DoSaveFont
+    OnLoadFont = OnSaveFont
 
     ' Get an existing font file name from the user
-    tmpFilename = OpenFileDialog$(APP_NAME + ": Open", , "*.psf|*.PSF|*.Psf", "PC Screen Font files")
+    tmpFilename = OPENFILEDIALOG$(APP_NAME + ": Open", , "*.psf|*.PSF|*.Psf", "PC Screen Font files")
 
     ' Exit if user canceled
-    If tmpFilename = NULLSTRING Then
-        If GetFontHeight <= 0 Then DoLoadFont = EVENT_NONE ' Do nothing if no font file is loaded
-        Exit Function
-    End If
+    IF LEN(tmpFilename) = NULL THEN
+        IF PSF1_GetFontHeight <= 0 THEN OnLoadFont = EVENT_NONE ' Do nothing if no font file is loaded
+        EXIT FUNCTION
+    END IF
 
     ' Read in the font
-    Dim psf As PSFType
-    If ReadFont(tmpFilename, TRUE, psf) Then
-        SetCurrentFont psf
-        sFontFile = tmpFilename
-        Title APP_NAME + " - " + GetFileNameFromPathOrURL(sFontFile)
+    DIM psf AS PSF1Type
+    IF PSF1_ReadFont(tmpFilename, psf) THEN
+        PSF1_SetCurrentFont psf
         ResizeClipboard
+        sFontFile = tmpFilename
         bFontChanged = FALSE
-    Else
-        MessageBox APP_NAME, "Failed to load " + tmpFilename + "!", "error"
-        DoLoadFont = EVENT_NONE
-    End If
-End Function
+        SetWindowTitle
+    ELSE
+        MESSAGEBOX APP_NAME, "Failed to load " + tmpFilename + "!", "error"
+        OnLoadFont = EVENT_NONE
+    END IF
+END FUNCTION
 
 
 ' This is called when the file should be saved
-Function DoSaveFont%%
-    DoSaveFont = EVENT_CHOOSE ' default to the character choose event
+FUNCTION OnSaveFont%%
+    OnSaveFont = EVENT_CHOOSE ' default to the character choose event
 
     ' Only attempt to save if the font has changed
-    If bFontChanged Then
-        If sFontFile = NULLSTRING Then
-            Dim tmpFilename As String
+    IF bFontChanged THEN
+        IF LEN(sFontFile) = NULL THEN
+            ' Check if the user wants to save the new font
+            IF MESSAGEBOX(APP_NAME, "Do you want to save the new font?", "yesno", "question") = 0 THEN EXIT FUNCTION
 
             ' Get a font file name from the user
-            tmpFilename = SaveFileDialog$(APP_NAME + ": Save", , "*.psf|*.PSF|*.Psf", "Font files")
+            DIM tmpFilename AS STRING: tmpFilename = SAVEFILEDIALOG$(APP_NAME + ": Save", , "*.psf|*.PSF|*.Psf", "Font files")
 
             ' Exit if user canceled
-            If tmpFilename = NULLSTRING Then Exit Function
+            IF LEN(tmpFilename) = NULL THEN EXIT FUNCTION
 
             sFontFile = tmpFilename ' set the font filename
-        Else
+        ELSE
             ' Ask the user if they want to overwrite the current file
-            If MessageBox(APP_NAME, "Font " + sFontFile + " has changed. Save it now?", "yesno", "question") = 0 Then Exit Function
-        End If
+            IF MESSAGEBOX(APP_NAME, "Font " + sFontFile + " has changed. Save it now?", "yesno", "question") = 0 THEN EXIT FUNCTION
+        END IF
 
         ' Save the font
-        If WriteFont(sFontFile) Then
+        IF PSF1_WriteFont(sFontFile) THEN
             bFontChanged = FALSE ' clear the font changed flag now
-        Else
-            MessageBox APP_NAME, "Failed to save " + sFontFile + "!", "error"
-        End If
-    End If
-End Function
+            SetWindowTitle ' update the window title
+        ELSE
+            MESSAGEBOX APP_NAME, "Failed to save " + sFontFile + "!", "error"
+        END IF
+    END IF
+END FUNCTION
 
 
 ' This is the character selector routine
-Function DoChooseCharacter%%
-    Static xp As Long, yp As Long
-    Dim refTime As Single, blinkState As Byte
+FUNCTION OnChooseCharacter%%
+    STATIC AS LONG xp, yp
+    DIM ticks AS UNSIGNED INTEGER64, blinkState AS BYTE
 
-    ' Save the current time
-    refTime = Timer
+    ' Save the current tick
+    ticks = GetTicks
 
-    Cls , Black
+    CLS , Black
 
     ' Show some info
-    Color Aqua, Navy
+    COLOR Aqua, Navy
     DrawTextBox 43, 1, 80, 30, "Controls"
-    Color , Navy
-    Locate 3, 47: Color Lime: Print "Left Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move left";
-    Locate 5, 47: Color Lime: Print "Right Arrow";: Color DimGray: Print " ....... ";: Color White: Print "Move right";
-    Locate 7, 47: Color Lime: Print "Up Arrow";: Color DimGray: Print " ............. ";: Color White: Print "Move up";
-    Locate 9, 47: Color Lime: Print "Down Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move down";
-    Locate 11, 47: Color Lime: Print "Mouse Pointer";: Color DimGray: Print " ......... ";: Color White: Print "Select";
-    Locate 13, 47: Color Lime: Print "Left Button";: Color DimGray: Print " ... ";: Color White: Print "Edit character";
-    Locate 15, 47: Color Lime: Print "Right Button";: Color DimGray: Print " .. ";: Color White: Print "Edit character";
-    Locate 17, 47: Color Lime: Print "Enter";: Color DimGray: Print " ......... ";: Color White: Print "Edit character";
-    Locate 19, 47: Color Lime: Print "F1";: Color DimGray: Print " ................. ";: Color White: Print "Load font";
-    Locate 21, 47: Color Lime: Print "F2";: Color DimGray: Print " .................. ";: Color White: Print "New font";
-    Locate 23, 47: Color Lime: Print "F9";: Color DimGray: Print " ................. ";: Color White: Print "Save font";
-    Locate 25, 47: Color Lime: Print "F5";: Color DimGray: Print " .............. ";: Color White: Print "Show preview";
-    Locate 27, 47: Color Lime: Print "Escape";: Color DimGray: Print " ............. ";: Color White: Print "Main menu";
+    COLOR , Navy
+    LOCATE 3, 47: COLOR Lime: PRINT "Left Arrow";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Move left";
+    LOCATE 5, 47: COLOR Lime: PRINT "Right Arrow";: COLOR DimGray: PRINT " ....... ";: COLOR White: PRINT "Move right";
+    LOCATE 7, 47: COLOR Lime: PRINT "Up Arrow";: COLOR DimGray: PRINT " ............. ";: COLOR White: PRINT "Move up";
+    LOCATE 9, 47: COLOR Lime: PRINT "Down Arrow";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Move down";
+    LOCATE 11, 47: COLOR Lime: PRINT "Mouse Pointer";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Select";
+    LOCATE 13, 47: COLOR Lime: PRINT "Left Button";: COLOR DimGray: PRINT " ... ";: COLOR White: PRINT "Edit character";
+    LOCATE 15, 47: COLOR Lime: PRINT "Right Button";: COLOR DimGray: PRINT " .. ";: COLOR White: PRINT "Edit character";
+    LOCATE 17, 47: COLOR Lime: PRINT "Enter";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Edit character";
+    LOCATE 19, 47: COLOR Lime: PRINT "F1";: COLOR DimGray: PRINT " ................. ";: COLOR White: PRINT "Load font";
+    LOCATE 21, 47: COLOR Lime: PRINT "F2";: COLOR DimGray: PRINT " .................. ";: COLOR White: PRINT "New font";
+    LOCATE 23, 47: COLOR Lime: PRINT "F9";: COLOR DimGray: PRINT " ................. ";: COLOR White: PRINT "Save font";
+    LOCATE 25, 47: COLOR Lime: PRINT "F5";: COLOR DimGray: PRINT " .............. ";: COLOR White: PRINT "Show preview";
+    LOCATE 27, 47: COLOR Lime: PRINT "Escape";: COLOR DimGray: PRINT " ............. ";: COLOR White: PRINT "Main menu";
 
     ' Draw the main character set area
-    Color White, DimGray
+    COLOR White, DimGray
     DrawTextBox 1, 1, 42, 30, "Select a character to edit"
 
-    Dim As Long x, y
+    DIM AS LONG x, y
 
     ' Draw the characters
-    Color Yellow, Navy
-    For y = 0 To 7
-        For x = 0 To 31
-            DrawCharacter 32 * y + x, 9 + x * (GetFontWidth + 2), 32 + y * (GetFontHeight + 2)
-        Next
-    Next
+    COLOR Yellow, Navy
+    FOR y = 0 TO 7
+        FOR x = 0 TO 31
+            PSF1_DrawCharacter 32 * y + x, 9 + x * (PSF1_GetFontWidth + 2), 32 + y * (PSF1_GetFontHeight + 2)
+        NEXT
+    NEXT
 
-    Dim in As Long
+    DIM in AS LONG
 
     ' Clear keyboard and mouse
     ClearInput
 
-    Do
-        If MouseInput Then
-            If GetMouseOverCharPosiion(x, y) Then
+    DO
+        IF MOUSEINPUT THEN
+            IF GetMouseOverCharPosiion(x, y) THEN
                 ' Turn off the current highlight
                 DrawCharSelector xp, yp, DimGray
                 xp = x
@@ -498,146 +557,146 @@ Function DoChooseCharacter%%
                 DrawCharSelector xp, yp, White
 
                 ' Also check for mouse click
-                If MouseButton(1) Or MouseButton(2) Then
+                IF MOUSEBUTTON(1) OR MOUSEBUTTON(2) THEN
                     ubFontCharacter = 32 * yp + xp
-                    DoChooseCharacter = EVENT_EDIT
-                    Exit Do
-                End If
-            End If
-        Else
-            Limit UPDATES_PER_SECOND
-        End If
+                    OnChooseCharacter = EVENT_EDIT
+                    EXIT DO
+                END IF
+            END IF
+        ELSE
+            LIMIT UPDATES_PER_SECOND
+        END IF
 
-        in = KeyHit
+        in = KEYHIT
 
-        Select Case in
-            Case KEY_LEFT_ARROW
+        SELECT CASE in
+            CASE KEY_LEFT_ARROW
                 DrawCharSelector xp, yp, DimGray
                 xp = xp - 1
-                If xp < 0 Then xp = 31
+                IF xp < 0 THEN xp = 31
                 DrawCharSelector xp, yp, White
 
-            Case KEY_RIGHT_ARROW
+            CASE KEY_RIGHT_ARROW
                 DrawCharSelector xp, yp, DimGray
                 xp = xp + 1
-                If xp > 31 Then xp = 0
+                IF xp > 31 THEN xp = 0
                 DrawCharSelector xp, yp, White
 
-            Case KEY_UP_ARROW
+            CASE KEY_UP_ARROW
                 DrawCharSelector xp, yp, DimGray
                 yp = yp - 1
-                If yp < 0 Then yp = 7
+                IF yp < 0 THEN yp = 7
                 DrawCharSelector xp, yp, White
 
-            Case KEY_DOWN_ARROW
+            CASE KEY_DOWN_ARROW
                 DrawCharSelector xp, yp, DimGray
                 yp = yp + 1
-                If yp > 7 Then yp = 0
+                IF yp > 7 THEN yp = 0
                 DrawCharSelector xp, yp, White
 
-            Case KEY_ENTER
+            CASE KEY_ENTER
                 ubFontCharacter = 32 * yp + xp
-                DoChooseCharacter = EVENT_EDIT
-                Exit Do
+                OnChooseCharacter = EVENT_EDIT
+                EXIT DO
 
-            Case KEY_F9
-                DoChooseCharacter = EVENT_SAVE
-                Exit Do
+            CASE KEY_F9
+                OnChooseCharacter = EVENT_SAVE
+                EXIT DO
 
-            Case KEY_F1
-                DoChooseCharacter = EVENT_LOAD
-                Exit Do
+            CASE KEY_F1
+                OnChooseCharacter = EVENT_LOAD
+                EXIT DO
 
-            Case KEY_F2
-                DoChooseCharacter = EVENT_NEW
-                Exit Do
+            CASE KEY_F2
+                OnChooseCharacter = EVENT_NEW
+                EXIT DO
 
-            Case KEY_F5
-                DoChooseCharacter = EVENT_PREVIEW
-                Exit Do
+            CASE KEY_F5
+                OnChooseCharacter = EVENT_PREVIEW
+                EXIT DO
 
-            Case KEY_ESCAPE
-                DoChooseCharacter = EVENT_NONE
-                Exit Do
+            CASE KEY_ESCAPE
+                OnChooseCharacter = EVENT_NONE
+                EXIT DO
 
-            Case Else
+            CASE ELSE
                 ' Blink the selector at regular intervals
-                If Abs(Timer - refTime) > .3 Then
-                    refTime = Timer
-                    blinkState = Not blinkState
+                IF GetTicks - ticks > BLINK_TICKS THEN
+                    ticks = GetTicks
+                    blinkState = NOT blinkState
 
-                    If blinkState Then
+                    IF blinkState THEN
                         DrawCharSelector xp, yp, White
-                    Else
+                    ELSE
                         DrawCharSelector xp, yp, DimGray
-                    End If
-                End If
-        End Select
+                    END IF
+                END IF
+        END SELECT
 
-        If Exit > 0 Then DoChooseCharacter = EVENT_QUIT: Exit Do
-    Loop
-End Function
+        IF EXIT > 0 THEN OnChooseCharacter = EVENT_QUIT: EXIT DO
+    LOOP
+END FUNCTION
 
 
 ' This is font bitmap editor routine
-Function DoEditCharacter%%
-    Dim refTime As Single, blinkState As Byte
+FUNCTION OnEditCharacter%%
+    DIM ticks AS UNSIGNED INTEGER64, blinkState AS BYTE
 
-    ' Save the current time
-    refTime = Timer
+    ' Save the current tick
+    ticks = GetTicks
 
-    Cls , Black
+    CLS , Black
 
     ' Show some info
-    Color Aqua, Navy
+    COLOR Aqua, Navy
     DrawTextBox 43, 1, 80, 30, "Controls"
-    Color , Navy
-    Locate 4, 47: Color Lime: Print "Left Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move left"
-    Locate 5, 47: Color Lime: Print "Right Arrow";: Color DimGray: Print " ....... ";: Color White: Print "Move right"
-    Locate 6, 47: Color Lime: Print "Up Arrow";: Color DimGray: Print " ............. ";: Color White: Print "Move up"
-    Locate 7, 47: Color Lime: Print "Down Arrow";: Color DimGray: Print " ......... ";: Color White: Print "Move down"
-    Locate 8, 47: Color Lime: Print "Mouse Pointer";: Color DimGray: Print " ......... ";: Color White: Print "Select"
-    Locate 9, 47: Color Lime: Print "Left Button";: Color DimGray: Print " ......... ";: Color White: Print "Pixel on"
-    Locate 10, 47: Color Lime: Print "Right Button";: Color DimGray: Print " ....... ";: Color White: Print "Pixel off"
-    Locate 11, 47: Color Lime: Print "Spacebar";: Color DimGray: Print " ........ ";: Color White: Print "Toggle pixel"
-    Locate 12, 47: Color Lime: Print "Delete";: Color DimGray: Print " ................. ";: Color White: Print "Clear"
-    Locate 13, 47: Color Lime: Print "Insert";: Color DimGray: Print " .................. ";: Color White: Print "Fill"
-    Locate 14, 47: Color Lime: Print "X";: Color DimGray: Print " ........................ ";: Color White: Print "Cut"
-    Locate 15, 47: Color Lime: Print "C";: Color DimGray: Print " ....................... ";: Color White: Print "Copy"
-    Locate 16, 47: Color Lime: Print "P";: Color DimGray: Print " ...................... ";: Color White: Print "Paste"
-    Locate 17, 47: Color Lime: Print "H";: Color DimGray: Print " ............ ";: Color White: Print "Flip horizontal"
-    Locate 18, 47: Color Lime: Print "V";: Color DimGray: Print " .............. ";: Color White: Print "Flip vertical"
-    Locate 19, 47: Color Lime: Print "I";: Color DimGray: Print " ..................... ";: Color White: Print "Invert"
-    Locate 20, 47: Color Lime: Print "A";: Color DimGray: Print " ............ ";: Color White: Print "Horizontal line"
-    Locate 21, 47: Color Lime: Print "W";: Color DimGray: Print " .............. ";: Color White: Print "Vertical line"
-    Locate 22, 47: Color Lime: Print "Home";: Color DimGray: Print " .............. ";: Color White: Print "Slide left"
-    Locate 23, 47: Color Lime: Print "End";: Color DimGray: Print " .............. ";: Color White: Print "Slide right"
-    Locate 24, 47: Color Lime: Print "Page Up";: Color DimGray: Print " ............. ";: Color White: Print "Slide up"
-    Locate 25, 47: Color Lime: Print "Page Down";: Color DimGray: Print " ......... ";: Color White: Print "Slide down"
-    Locate 26, 47: Color Lime: Print "Enter";: Color DimGray: Print " .......... ";: Color White: Print "Save & return"
-    Locate 27, 47: Color Lime: Print "Escape";: Color DimGray: Print " ....... ";: Color White: Print "Cancel & return"
+    COLOR , Navy
+    LOCATE 4, 47: COLOR Lime: PRINT "Left Arrow";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Move left"
+    LOCATE 5, 47: COLOR Lime: PRINT "Right Arrow";: COLOR DimGray: PRINT " ....... ";: COLOR White: PRINT "Move right"
+    LOCATE 6, 47: COLOR Lime: PRINT "Up Arrow";: COLOR DimGray: PRINT " ............. ";: COLOR White: PRINT "Move up"
+    LOCATE 7, 47: COLOR Lime: PRINT "Down Arrow";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Move down"
+    LOCATE 8, 47: COLOR Lime: PRINT "Mouse Pointer";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Select"
+    LOCATE 9, 47: COLOR Lime: PRINT "Left Button";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Pixel on"
+    LOCATE 10, 47: COLOR Lime: PRINT "Right Button";: COLOR DimGray: PRINT " ....... ";: COLOR White: PRINT "Pixel off"
+    LOCATE 11, 47: COLOR Lime: PRINT "Spacebar";: COLOR DimGray: PRINT " ........ ";: COLOR White: PRINT "Toggle pixel"
+    LOCATE 12, 47: COLOR Lime: PRINT "Delete";: COLOR DimGray: PRINT " ................. ";: COLOR White: PRINT "Clear"
+    LOCATE 13, 47: COLOR Lime: PRINT "Insert";: COLOR DimGray: PRINT " .................. ";: COLOR White: PRINT "Fill"
+    LOCATE 14, 47: COLOR Lime: PRINT "X";: COLOR DimGray: PRINT " ........................ ";: COLOR White: PRINT "Cut"
+    LOCATE 15, 47: COLOR Lime: PRINT "C";: COLOR DimGray: PRINT " ....................... ";: COLOR White: PRINT "Copy"
+    LOCATE 16, 47: COLOR Lime: PRINT "P";: COLOR DimGray: PRINT " ...................... ";: COLOR White: PRINT "Paste"
+    LOCATE 17, 47: COLOR Lime: PRINT "H";: COLOR DimGray: PRINT " ............ ";: COLOR White: PRINT "Flip horizontal"
+    LOCATE 18, 47: COLOR Lime: PRINT "V";: COLOR DimGray: PRINT " .............. ";: COLOR White: PRINT "Flip vertical"
+    LOCATE 19, 47: COLOR Lime: PRINT "I";: COLOR DimGray: PRINT " ..................... ";: COLOR White: PRINT "Invert"
+    LOCATE 20, 47: COLOR Lime: PRINT "A";: COLOR DimGray: PRINT " ............ ";: COLOR White: PRINT "Horizontal line"
+    LOCATE 21, 47: COLOR Lime: PRINT "W";: COLOR DimGray: PRINT " .............. ";: COLOR White: PRINT "Vertical line"
+    LOCATE 22, 47: COLOR Lime: PRINT "Home";: COLOR DimGray: PRINT " .............. ";: COLOR White: PRINT "Slide left"
+    LOCATE 23, 47: COLOR Lime: PRINT "End";: COLOR DimGray: PRINT " .............. ";: COLOR White: PRINT "Slide right"
+    LOCATE 24, 47: COLOR Lime: PRINT "Page Up";: COLOR DimGray: PRINT " ............. ";: COLOR White: PRINT "Slide up"
+    LOCATE 25, 47: COLOR Lime: PRINT "Page Down";: COLOR DimGray: PRINT " ......... ";: COLOR White: PRINT "Slide down"
+    LOCATE 26, 47: COLOR Lime: PRINT "Enter";: COLOR DimGray: PRINT " .......... ";: COLOR White: PRINT "Save & return"
+    LOCATE 27, 47: COLOR Lime: PRINT "Escape";: COLOR DimGray: PRINT " ....... ";: COLOR White: PRINT "Cancel & return"
 
     ' Draw the main character set area
-    Color White, DimGray
-    DrawTextBox 1, 1, 42, 30, Trim$(Str$(ubFontCharacter) + ": " + Chr$(ubFontCharacter))
-    Locate 2, 27: Color Navy, Yellow: Print "Demonstration:";
+    COLOR White, DimGray
+    DrawTextBox 1, 1, 42, 30, TRIM$(STR$(ubFontCharacter) + ": " + CHR$(ubFontCharacter))
+    LOCATE 2, 27: COLOR Navy, Yellow: PRINT "Demonstration:";
 
     ' Save a copy of this character
-    Dim cpy As String: cpy = GetGlyphBitmap(ubFontCharacter)
+    DIM cpy AS STRING: cpy = PSF1_GetGlyphBitmap(ubFontCharacter)
 
     ' Draw the initial bitmap
     DrawCharBitmap ubFontCharacter
     DrawDemo
 
-    Dim As Long xp, yp, x, y, in
-    Dim tmp As String, sl As Unsigned Byte
+    DIM AS LONG xp, yp, x, y, in
+    DIM tmp AS STRING, sl AS UNSIGNED BYTE
 
     ' Clear keyboard and mouse
     ClearInput
 
-    Do
-        If MouseInput Then
-            If GetMouseOverCellPosition(x, y) Then
+    DO
+        IF MOUSEINPUT THEN
+            IF GetMouseOverCellPosition(x, y) THEN
                 ' Turn off the current highlight
                 DrawCellSelector xp, yp, DimGray
                 xp = x
@@ -645,428 +704,463 @@ Function DoEditCharacter%%
                 DrawCellSelector xp, yp, White
 
                 ' Also check for mouse click
-                If MouseButton(1) Then
+                IF MOUSEBUTTON(1) THEN
                     ' Flag font changed
                     bFontChanged = TRUE
 
-                    SetGlyphPixel ubFontCharacter, xp, yp, TRUE
-                End If
+                    PSF1_SetGlyphPixel ubFontCharacter, xp, yp, TRUE
+                END IF
 
-                If MouseButton(2) Then
+                IF MOUSEBUTTON(2) THEN
                     ' Flag font changed
                     bFontChanged = TRUE
 
-                    SetGlyphPixel ubFontCharacter, xp, yp, FALSE
-                End If
+                    PSF1_SetGlyphPixel ubFontCharacter, xp, yp, FALSE
+                END IF
 
                 DrawCharBit ubFontCharacter, xp, yp
                 DrawDemo
-            End If
-        Else
-            Limit UPDATES_PER_SECOND
-        End If
+            END IF
+        ELSE
+            LIMIT UPDATES_PER_SECOND
+        END IF
 
-        in = KeyHit
+        in = KEYHIT
 
-        Select Case in
-            Case KEY_LEFT_ARROW ' Move left
+        SELECT CASE in
+            CASE KEY_LEFT_ARROW ' Move left
                 DrawCellSelector xp, yp, DimGray
                 xp = xp - 1
-                If xp < 0 Then xp = GetFontWidth - 1
+                IF xp < 0 THEN xp = PSF1_GetFontWidth - 1
                 DrawCellSelector xp, yp, White
 
-            Case KEY_RIGHT_ARROW ' Move right
+            CASE KEY_RIGHT_ARROW ' Move right
                 DrawCellSelector xp, yp, DimGray
                 xp = xp + 1
-                If xp >= GetFontWidth Then xp = 0
+                IF xp >= PSF1_GetFontWidth THEN xp = 0
                 DrawCellSelector xp, yp, White
 
-            Case KEY_UP_ARROW ' Move up
+            CASE KEY_UP_ARROW ' Move up
                 DrawCellSelector xp, yp, DimGray
                 yp = yp - 1
-                If yp < 0 Then yp = GetFontHeight - 1
+                IF yp < 0 THEN yp = PSF1_GetFontHeight - 1
                 DrawCellSelector xp, yp, White
 
-            Case KEY_DOWN_ARROW ' Move down
+            CASE KEY_DOWN_ARROW ' Move down
                 DrawCellSelector xp, yp, DimGray
                 yp = yp + 1
-                If yp >= GetFontHeight Then yp = 0
+                IF yp >= PSF1_GetFontHeight THEN yp = 0
                 DrawCellSelector xp, yp, White
 
-            Case KEY_SPACE_BAR ' Toggle pixel
+            CASE KEY_SPACE ' Toggle pixel
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                SetGlyphPixel ubFontCharacter, xp, yp, Not GetGlyphPixel(ubFontCharacter, xp, yp)
+                PSF1_SetGlyphPixel ubFontCharacter, xp, yp, NOT PSF1_GetGlyphPixel(ubFontCharacter, xp, yp)
                 DrawCharBit ubFontCharacter, xp, yp
                 DrawDemo
 
-            Case KEY_DELETE ' Clear bitmap
+            CASE KEY_DELETE ' Clear bitmap
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                SetGlyphBitmap ubFontCharacter, String$(GetFontHeight, NULL)
+                PSF1_SetGlyphBitmap ubFontCharacter, STRING$(PSF1_GetFontHeight, NULL)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_INSERT ' Fill bitmap
+            CASE KEY_INSERT ' Fill bitmap
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                SetGlyphBitmap ubFontCharacter, String$(GetFontHeight, 255)
+                PSF1_SetGlyphBitmap ubFontCharacter, STRING$(PSF1_GetFontHeight, 255)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_X, KEY_UPPER_X ' Cut
+            CASE KEY_LOWER_X, KEY_UPPER_X ' Cut
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                sClipboard = GetGlyphBitmap(ubFontCharacter)
-                SetGlyphBitmap ubFontCharacter, String$(GetFontHeight, NULL)
+                sClipboard = PSF1_GetGlyphBitmap(ubFontCharacter)
+                PSF1_SetGlyphBitmap ubFontCharacter, STRING$(PSF1_GetFontHeight, NULL)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_C, KEY_UPPER_C ' Copy
-                sClipboard = GetGlyphBitmap(ubFontCharacter)
+            CASE KEY_LOWER_C, KEY_UPPER_C ' Copy
+                sClipboard = PSF1_GetGlyphBitmap(ubFontCharacter)
 
-            Case KEY_LOWER_P, KEY_UPPER_P ' Paste
+            CASE KEY_LOWER_P, KEY_UPPER_P ' Paste
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                SetGlyphBitmap ubFontCharacter, sClipboard
+                PSF1_SetGlyphBitmap ubFontCharacter, sClipboard
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_H, KEY_UPPER_H ' Horizontal flip
+            CASE KEY_LOWER_H, KEY_UPPER_H ' Horizontal flip
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 1 To GetFontHeight
-                    Asc(tmp, y) = ReverseBitsByte(Asc(tmp, y))
-                Next
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                FOR y = 1 TO PSF1_GetFontHeight
+                    ASC(tmp, y) = ReverseBitsByte(ASC(tmp, y))
+                NEXT
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_V, KEY_UPPER_V ' Vertical flip
+            CASE KEY_LOWER_V, KEY_UPPER_V ' Vertical flip
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                SetGlyphBitmap ubFontCharacter, ReverseString(GetGlyphBitmap(ubFontCharacter))
+                PSF1_SetGlyphBitmap ubFontCharacter, ReverseString(PSF1_GetGlyphBitmap(ubFontCharacter))
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_I, KEY_UPPER_I ' Invert
+            CASE KEY_LOWER_I, KEY_UPPER_I ' Invert
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 1 To GetFontHeight
-                    Asc(tmp, y) = 255 - Asc(tmp, y)
-                Next
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                FOR y = 1 TO PSF1_GetFontHeight
+                    ASC(tmp, y) = 255 - ASC(tmp, y)
+                NEXT
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_A, KEY_UPPER_A ' Horizontal line
+            CASE KEY_LOWER_A, KEY_UPPER_A ' Horizontal line
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                Asc(tmp, yp + 1) = 255
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                ASC(tmp, yp + 1) = 255
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_LOWER_W, KEY_UPPER_W ' Vertical line
+            CASE KEY_LOWER_W, KEY_UPPER_W ' Vertical line
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                For y = 0 To GetFontHeight - 1
-                    SetGlyphPixel ubFontCharacter, xp, y, TRUE
-                Next
+                FOR y = 0 TO PSF1_GetFontHeight - 1
+                    PSF1_SetGlyphPixel ubFontCharacter, xp, y, TRUE
+                NEXT
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_HOME ' Slide left
+            CASE KEY_HOME ' Slide left
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 1 To GetFontHeight
-                    sl = Asc(tmp, y) ' Asc() returns integer instead of byte :(
-                    Asc(tmp, y) = RoL(sl, 1)
-                Next
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                FOR y = 1 TO PSF1_GetFontHeight
+                    sl = ASC(tmp, y) ' Asc() returns integer instead of byte :(
+                    ASC(tmp, y) = ROL(sl, 1)
+                NEXT
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_END ' Slide right
+            CASE KEY_END ' Slide right
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                For y = 1 To GetFontHeight
-                    sl = Asc(tmp, y) ' Asc() returns integer instead of byte :(
-                    Asc(tmp, y) = RoR(sl, 1)
-                Next
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                FOR y = 1 TO PSF1_GetFontHeight
+                    sl = ASC(tmp, y) ' Asc() returns integer instead of byte :(
+                    ASC(tmp, y) = ROR(sl, 1)
+                NEXT
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_PAGE_UP ' Slide up
+            CASE KEY_PAGE_UP ' Slide up
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                sl = Asc(tmp, 1)
-                For y = 1 To GetFontHeight - 1
-                    Asc(tmp, y) = Asc(tmp, y + 1)
-                Next
-                Asc(tmp, GetFontHeight) = sl
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                sl = ASC(tmp, 1)
+                FOR y = 1 TO PSF1_GetFontHeight - 1
+                    ASC(tmp, y) = ASC(tmp, y + 1)
+                NEXT
+                ASC(tmp, PSF1_GetFontHeight) = sl
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_PAGE_DOWN ' Slide down
+            CASE KEY_PAGE_DOWN ' Slide down
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                tmp = GetGlyphBitmap(ubFontCharacter)
-                sl = Asc(tmp, GetFontHeight)
-                For y = GetFontHeight - 1 To 1 Step -1
-                    Asc(tmp, y + 1) = Asc(tmp, y)
-                Next
-                Asc(tmp, 1) = sl
-                SetGlyphBitmap ubFontCharacter, tmp
+                tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
+                sl = ASC(tmp, PSF1_GetFontHeight)
+                FOR y = PSF1_GetFontHeight - 1 TO 1 STEP -1
+                    ASC(tmp, y + 1) = ASC(tmp, y)
+                NEXT
+                ASC(tmp, 1) = sl
+                PSF1_SetGlyphBitmap ubFontCharacter, tmp
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            Case KEY_ENTER ' Save & return
-                DoEditCharacter = EVENT_CHOOSE
+            CASE KEY_ENTER ' Save & return
+                OnEditCharacter = EVENT_CHOOSE
 
-                Exit Do
+                EXIT DO
 
-            Case KEY_ESCAPE ' Cancel & return
-                SetGlyphBitmap ubFontCharacter, cpy
+            CASE KEY_ESCAPE ' Cancel & return
+                PSF1_SetGlyphBitmap ubFontCharacter, cpy
 
-                DoEditCharacter = EVENT_CHOOSE
+                OnEditCharacter = EVENT_CHOOSE
 
-                Exit Do
+                EXIT DO
 
-            Case Else
+            CASE ELSE
                 ' Blink the selector at regular intervals
-                If Abs(Timer - refTime) > .3 Then
-                    refTime = Timer
-                    blinkState = Not blinkState
+                IF GetTicks - ticks > BLINK_TICKS THEN
+                    ticks = GetTicks
+                    blinkState = NOT blinkState
 
-                    If blinkState Then
+                    IF blinkState THEN
                         DrawCellSelector xp, yp, White
-                    Else
+                    ELSE
                         DrawCellSelector xp, yp, DimGray
-                    End If
-                End If
-        End Select
+                    END IF
 
-        If Exit > 0 Then DoEditCharacter = EVENT_QUIT: Exit Do
-    Loop
-End Function
+                    IF bFontChanged THEN SetWindowTitle ' update the title only if the user changed the glyph
+                END IF
+        END SELECT
+
+        IF EXIT > 0 THEN OnEditCharacter = EVENT_QUIT: EXIT DO
+    LOOP
+END FUNCTION
 
 
 ' Draws a preview screen using the loaded font
-Function DoShowPreview%%
-    Cls , Black
+FUNCTION OnShowPreview%%
+    CLS , Black
 
     ClearInput
 
     ' Draw a box on the screen
-    Color Aqua, Navy
+    COLOR Aqua, Navy
     DrawTextBox 1, 1, 80, 30, "Preview"
 
     ' Draw the body
-    Color White, Navy
-    DrawString "This Fox has a longing for grapes:", GetFontWidth * 2, GetFontHeight * 3
-    DrawString "He jumps, but the bunch still escapes.", GetFontWidth * 2, GetFontHeight * 4
-    DrawString "So he goes away sour;", GetFontWidth * 2, GetFontHeight * 5
-    DrawString "And, 'tis said, to this hour", GetFontWidth * 2, GetFontHeight * 6
-    DrawString "Declares that he's no taste for grapes.", GetFontWidth * 2, GetFontHeight * 7
-    DrawString "     /\                   ,'|", GetFontWidth * 45, GetFontHeight * 3
-    DrawString " o--'O `.                /  /", GetFontWidth * 45, GetFontHeight * 4
-    DrawString "  `--.   `-----------._,' ,'", GetFontWidth * 45, GetFontHeight * 5
-    DrawString "      \              ,---'", GetFontWidth * 45, GetFontHeight * 6
-    DrawString "       ) )    _,--(  |", GetFontWidth * 45, GetFontHeight * 7
-    DrawString "      /,^.---'     )/\\", GetFontWidth * 45, GetFontHeight * 8
-    DrawString "     ((   \\      ((  \\", GetFontWidth * 45, GetFontHeight * 9
-    DrawString "      \)   \)      \) (/", GetFontWidth * 45, GetFontHeight * 10
+    COLOR White, Navy
+    PSF1_DrawString "This Fox has a longing for grapes:", PSF1_GetFontWidth * 2, PSF1_GetFontHeight * 3
+    PSF1_DrawString "He jumps, but the bunch still escapes.", PSF1_GetFontWidth * 2, PSF1_GetFontHeight * 4
+    PSF1_DrawString "So he goes away sour;", PSF1_GetFontWidth * 2, PSF1_GetFontHeight * 5
+    PSF1_DrawString "And, 'tis said, to this hour", PSF1_GetFontWidth * 2, PSF1_GetFontHeight * 6
+    PSF1_DrawString "Declares that he's no taste for grapes.", PSF1_GetFontWidth * 2, PSF1_GetFontHeight * 7
+    PSF1_DrawString "     /\                   ,'|", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 3
+    PSF1_DrawString " o--'O `.                /  /", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 4
+    PSF1_DrawString "  `--.   `-----------._,' ,'", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 5
+    PSF1_DrawString "      \              ,---'", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 6
+    PSF1_DrawString "       ) )    _,--(  |", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 7
+    PSF1_DrawString "      /,^.---'     )/\\", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 8
+    PSF1_DrawString "     ((   \\      ((  \\", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 9
+    PSF1_DrawString "      \)   \)      \) (/", PSF1_GetFontWidth * 45, PSF1_GetFontHeight * 10
 
     WaitInput
 
-    If Exit > 0 Then DoShowPreview = EVENT_QUIT Else DoShowPreview = EVENT_CHOOSE
-End Function
+    IF EXIT > 0 THEN OnShowPreview = EVENT_QUIT ELSE OnShowPreview = EVENT_CHOOSE
+END FUNCTION
+
+
+' This sets up the Window tile based on several things
+SUB SetWindowTitle
+    DIM windowTitle AS STRING
+
+    ' First check if we have loaded a font file
+    IF LEN(sFontFile) <> NULL THEN ' loaded from disk
+        windowTitle = GetFileNameFromPathOrURL(sFontFile)
+    ELSEIF bFontChanged AND LEN(sFontFile) = NULL THEN ' creating new
+        windowTitle = "UNTITLED"
+    END IF
+
+    ' Add an asterisk if the font file has changed
+    IF bFontChanged THEN windowTitle = windowTitle + "*"
+
+    ' Finally add the application name
+    IF LEN(windowTitle) <> NULL THEN
+        windowTitle = windowTitle + " - " + APP_NAME
+    ELSE
+        windowTitle = APP_NAME + " " + OS$
+    END IF
+
+    TITLE windowTitle
+END SUB
 
 
 ' Resizes the clipboard to match the font height
-Sub ResizeClipboard
-    sClipboard = Left$(sClipboard + String$(GetFontHeight, NULL), GetFontHeight)
-End Sub
+SUB ResizeClipboard
+    sClipboard = LEFT$(sClipboard + STRING$(PSF1_GetFontHeight, NULL), PSF1_GetFontHeight)
+END SUB
 
 
 ' Return true if mouse is over any character
 ' Updates mxp & myp with position
 ' This is used by the character chooser
-Function GetMouseOverCharPosiion%% (mxp As Long, myp As Long)
-    Dim As Long x, y
+FUNCTION GetMouseOverCharPosiion%% (mxp AS LONG, myp AS LONG)
+    DIM AS LONG x, y, fw, fh
 
     GetMouseOverCharPosiion = FALSE
+    fw = PSF1_GetFontWidth
+    fh = PSF1_GetFontHeight
 
-    For y = 0 To 7
-        For x = 0 To 31
-            If PointCollidesWithRect(MouseX, MouseY, 8 + x * (GetFontWidth + 2), 31 + y * (GetFontHeight + 2), 9 + GetFontWidth + x * (GetFontWidth + 2), 32 + GetFontHeight + y * (GetFontHeight + 2)) Then
+    FOR y = 0 TO 7
+        FOR x = 0 TO 31
+            IF PointCollidesWithRect(MOUSEX, MOUSEY, 8 + x * (fw + 2), 31 + y * (fh + 2), 9 + fw + x * (fw + 2), 32 + fh + y * (fh + 2)) THEN
                 mxp = x
                 myp = y
                 GetMouseOverCharPosiion = TRUE
-                Exit Function
-            End If
-        Next
-    Next
-End Function
+                EXIT FUNCTION
+            END IF
+        NEXT
+    NEXT
+END FUNCTION
 
 
 ' Draw the character selector using color c at xp, yp
-Sub DrawCharSelector (xp As Long, yp As Long, c As Unsigned Long)
-    Line (8 + xp * (GetFontWidth + 2), 31 + yp * (GetFontHeight + 2))-(9 + GetFontWidth + xp * (GetFontWidth + 2), 32 + GetFontHeight + yp * (GetFontHeight + 2)), c, B
-End Sub
+SUB DrawCharSelector (xp AS LONG, yp AS LONG, c AS UNSIGNED LONG)
+    DIM AS LONG fw, fh
+
+    fw = PSF1_GetFontWidth
+    fh = PSF1_GetFontHeight
+
+    LINE (8 + xp * (fw + 2), 31 + yp * (fh + 2))-(9 + fw + xp * (fw + 2), 32 + fh + yp * (fh + 2)), c, B
+END SUB
 
 
 ' Return true if mouse is over any cell
 ' Updates mxp & myp with position
 ' This is used by the bitmap editor
-Function GetMouseOverCellPosition%% (mxp As Long, myp As Long)
-    Dim As Long x, y
+FUNCTION GetMouseOverCellPosition%% (mxp AS LONG, myp AS LONG)
+    DIM AS LONG x, y
 
     GetMouseOverCellPosition = FALSE
 
-    For y = 0 To GetFontHeight - 1
-        For x = 0 To GetFontWidth - 1
-            If PointCollidesWithRect(MouseX, MouseY, 8 + x * 14, 19 + y * 14, 22 + x * 14, 33 + y * 14) Then
+    FOR y = 0 TO PSF1_GetFontHeight - 1
+        FOR x = 0 TO PSF1_GetFontWidth - 1
+            IF PointCollidesWithRect(MOUSEX, MOUSEY, 8 + x * 14, 19 + y * 14, 22 + x * 14, 33 + y * 14) THEN
                 mxp = x
                 myp = y
                 GetMouseOverCellPosition = TRUE
-                Exit Function
-            End If
-        Next
-    Next
-End Function
+                EXIT FUNCTION
+            END IF
+        NEXT
+    NEXT
+END FUNCTION
 
 
 ' Draw the character cell selector using color c at xe, ye
-Sub DrawCellSelector (x As Long, y As Long, c As Unsigned Long)
-    Line (8 + x * 14, 19 + y * 14)-(22 + x * 14, 33 + y * 14), c, B
-End Sub
+SUB DrawCellSelector (x AS LONG, y AS LONG, c AS UNSIGNED LONG)
+    LINE (8 + x * 14, 19 + y * 14)-(22 + x * 14, 33 + y * 14), c, B
+END SUB
 
 
 ' This draws a single character pixel block
-Sub DrawCharBit (ch As Unsigned Byte, x As Long, y As Long)
-    Dim As Long xp, yp
+SUB DrawCharBit (ch AS UNSIGNED BYTE, x AS LONG, y AS LONG)
+    DIM AS LONG xp, yp
 
     xp = 9 + x * 14
     yp = 20 + y * 14
-    If GetGlyphPixel(ch, x, y) Then
-        Line (xp, yp)-(xp + 12, yp + 12), Yellow, BF
-    Else
-        Line (xp, yp)-(xp + 12, yp + 12), Navy, BF
-    End If
-End Sub
+    IF PSF1_GetGlyphPixel(ch, x, y) THEN
+        LINE (xp, yp)-(xp + 12, yp + 12), Yellow, BF
+    ELSE
+        LINE (xp, yp)-(xp + 12, yp + 12), Navy, BF
+    END IF
+END SUB
 
 
 ' Draw the character bitmap for editing
-Sub DrawCharBitmap (ch As Unsigned Byte)
-    Dim As Long x, y
+SUB DrawCharBitmap (ch AS UNSIGNED BYTE)
+    DIM AS LONG x, y
 
-    For y = 0 To GetFontHeight - 1
-        For x = 0 To GetFontWidth - 1
+    FOR y = 0 TO PSF1_GetFontHeight - 1
+        FOR x = 0 TO PSF1_GetFontWidth - 1
             DrawCharBit ch, x, y
-        Next
-    Next
-End Sub
+        NEXT
+    NEXT
+END SUB
 
 
 ' This draws a grid of the same character for demo purpose on the edit screen
-Sub DrawDemo
-    Dim As Long x, y
+SUB DrawDemo
+    DIM AS LONG x, y
 
-    Color White, Black
+    COLOR White, Black
 
     ' Draw the character on the right side using the font rending code
-    For y = 32 To 32 + 12 * GetFontHeight Step GetFontHeight
-        For x = 208 To 208 + 13 * GetFontWidth Step GetFontWidth
-            DrawCharacter ubFontCharacter, x, y
-        Next
-    Next
-End Sub
+    FOR y = 32 TO 32 + 12 * PSF1_GetFontHeight STEP PSF1_GetFontHeight
+        FOR x = 208 TO 208 + 13 * PSF1_GetFontWidth STEP PSF1_GetFontWidth
+            PSF1_DrawCharacter ubFontCharacter, x, y
+        NEXT
+    NEXT
+END SUB
 
 
 ' Draw a box using box drawing characters and optionally puts a caption
-Sub DrawTextBox (l As Long, t As Long, r As Long, b As Long, sCaption As String)
-    Dim As Long i, inBoxWidth
+SUB DrawTextBox (l AS LONG, t AS LONG, r AS LONG, b AS LONG, sCaption AS STRING)
+    DIM AS LONG i, inBoxWidth
 
     ' Calculate the "internal" box width
     inBoxWidth = r - l - 1
 
     ' Draw the top line
-    Locate t, l: Print Chr$(218); String$(inBoxWidth, 196); Chr$(191);
+    LOCATE t, l: PRINT CHR$(218); STRING$(inBoxWidth, 196); CHR$(191);
 
     ' Draw the sides
-    For i = t + 1 To b - 1
-        Locate i, l: Print Chr$(179); Space$(inBoxWidth); Chr$(179);
-    Next
+    FOR i = t + 1 TO b - 1
+        LOCATE i, l: PRINT CHR$(179); SPACE$(inBoxWidth); CHR$(179);
+    NEXT
 
     ' Draw the bottom line
-    Locate b, l: Print Chr$(192); String$(inBoxWidth, 196); Chr$(217);
+    LOCATE b, l: PRINT CHR$(192); STRING$(inBoxWidth, 196); CHR$(217);
 
     ' Set the caption if specified
-    If sCaption <> NULLSTRING Then
-        Color BackgroundColor, DefaultColor
-        Locate t, l + inBoxWidth \ 2 - Len(sCaption) \ 2
-        Print " "; sCaption; " ";
-        Color BackgroundColor, DefaultColor
-    End If
-End Sub
+    IF LEN(sCaption) <> NULL THEN
+        COLOR BACKGROUNDCOLOR, DEFAULTCOLOR
+        LOCATE t, l + inBoxWidth \ 2 - LEN(sCaption) \ 2
+        PRINT " "; sCaption; " ";
+        COLOR BACKGROUNDCOLOR, DEFAULTCOLOR
+    END IF
+END SUB
 
 
 ' Point & box collision test for mouse
-Function PointCollidesWithRect%% (x As Long, y As Long, l As Long, t As Long, r As Long, b As Long)
-    PointCollidesWithRect = (x >= l And x <= r And y >= t And y <= b)
-End Function
+FUNCTION PointCollidesWithRect%% (x AS LONG, y AS LONG, l AS LONG, t AS LONG, r AS LONG, b AS LONG)
+    PointCollidesWithRect = (x >= l AND x <= r AND y >= t AND y <= b)
+END FUNCTION
 
 
 ' Sleeps until some keys or buttons are pressed
-Sub WaitInput
-    Do
-        While MouseInput
-            If MouseButton(1) Or MouseButton(2) Or MouseButton(3) Then Exit Do
-        Wend
-        Limit UPDATES_PER_SECOND
-    Loop While KeyHit <= NULL
-End Sub
+SUB WaitInput
+    DO
+        WHILE MOUSEINPUT
+            IF MOUSEBUTTON(1) OR MOUSEBUTTON(2) OR MOUSEBUTTON(3) THEN EXIT DO
+        WEND
+        LIMIT UPDATES_PER_SECOND
+    LOOP WHILE KEYHIT <= NULL
+END SUB
 
 
 ' Chear mouse and keyboard events
-Sub ClearInput
-    While MouseInput
-    Wend
-    KeyClear
-End Sub
+SUB ClearInput
+    WHILE MOUSEINPUT
+    WEND
+    KEYCLEAR
+END SUB
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
 ' MODULE FILES
 '-----------------------------------------------------------------------------------------------------------------------
-'$Include:'include/StringOps.bas'
-'$Include:'include/FileOps.bas'
-'$Include:'include/Base64.bas'
-'$Include:'include/ANSIPrint.bas'
-'$Include:'include/VGAFont.bas'
+'$INCLUDE:'include/StringOps.bas'
+'$INCLUDE:'include/FileOps.bas'
+'$INCLUDE:'include/TimeOps.bas'
+'$INCLUDE:'include/Base64.bas'
+'$INCLUDE:'include/ANSIPrint.bas'
+'$INCLUDE:'include/VGAFont.bas'
 '-----------------------------------------------------------------------------------------------------------------------
 '-----------------------------------------------------------------------------------------------------------------------
