@@ -302,22 +302,19 @@ END FUNCTION
 
 ' Imports a font from a raw VGA font dump (like bin2psf.bas)
 FUNCTION ImportRaw%% (fileName AS STRING)
-    ImportRaw = TRUE ' assume success
-
     DIM h AS LONG: h = GetFileSize(fileName) ' get the file size
 
-    ' Basic check: The raw font should be completely divisible by 256
-    IF h = 0 OR h MOD 256 <> 0 THEN
-        ImportRaw = FALSE
-        EXIT FUNCTION
-    END IF
-
     DIM buffer AS STRING: buffer = LoadFile(fileName) ' load the whole file into memory
-    PSF1_SetFont buffer ' set the font data. This also sets the font height
+
+    ' Set the font data. This also does basic size check and sets the font height
+    IF NOT PSF1_SetFont(buffer) THEN EXIT FUNCTION
+
     ResizeClipboard
     sFontFile = EMPTY_STRING
     bFontChanged = TRUE
     SetWindowTitle
+
+    ImportRaw = TRUE
 END FUNCTION
 
 
@@ -420,7 +417,7 @@ FUNCTION OnCommandLine%%
         IF FILEEXISTS(sFontFile) THEN
             ' Read in the font
             DIM psf AS PSF1Type
-            IF PSF1_ReadFont(sFontFile, psf) THEN
+            IF PSF1_LoadFontFromPath(sFontFile, psf) THEN
                 PSF1_SetCurrentFont psf
                 ResizeClipboard
                 SetWindowTitle
@@ -454,7 +451,7 @@ FUNCTION OnLoadFont%%
 
     ' Read in the font
     DIM psf AS PSF1Type
-    IF PSF1_ReadFont(tmpFilename, psf) THEN
+    IF PSF1_LoadFontFromPath(tmpFilename, psf) THEN
         PSF1_SetCurrentFont psf
         ResizeClipboard
         sFontFile = tmpFilename
@@ -490,7 +487,7 @@ FUNCTION OnSaveFont%%
         END IF
 
         ' Save the font
-        IF PSF1_WriteFont(sFontFile) THEN
+        IF PSF1_SaveFont(sFontFile) THEN
             bFontChanged = FALSE ' clear the font changed flag now
             SetWindowTitle ' update the window title
         ELSE
@@ -633,7 +630,10 @@ FUNCTION OnChooseCharacter%%
                 END IF
         END SELECT
 
-        IF EXIT > 0 THEN OnChooseCharacter = EVENT_QUIT: EXIT DO
+        IF EXIT > 0 THEN
+            OnChooseCharacter = EVENT_QUIT
+            EXIT DO
+        END IF
     LOOP
 END FUNCTION
 
@@ -707,19 +707,16 @@ FUNCTION OnEditCharacter%%
                 IF MOUSEBUTTON(1) THEN
                     ' Flag font changed
                     bFontChanged = TRUE
-
                     PSF1_SetGlyphPixel ubFontCharacter, xp, yp, TRUE
-                END IF
-
-                IF MOUSEBUTTON(2) THEN
+                    DrawCharBit ubFontCharacter, xp, yp
+                    DrawDemo
+                ELSEIF MOUSEBUTTON(2) THEN
                     ' Flag font changed
                     bFontChanged = TRUE
-
                     PSF1_SetGlyphPixel ubFontCharacter, xp, yp, FALSE
+                    DrawCharBit ubFontCharacter, xp, yp
+                    DrawDemo
                 END IF
-
-                DrawCharBit ubFontCharacter, xp, yp
-                DrawDemo
             END IF
         ELSE
             LIMIT UPDATES_PER_SECOND
@@ -922,15 +919,17 @@ FUNCTION OnEditCharacter%%
 
                     IF blinkState THEN
                         DrawCellSelector xp, yp, White
+                        IF bFontChanged THEN SetWindowTitle ' update the title only if the user changed the glyph
                     ELSE
                         DrawCellSelector xp, yp, DimGray
                     END IF
-
-                    IF bFontChanged THEN SetWindowTitle ' update the title only if the user changed the glyph
                 END IF
         END SELECT
 
-        IF EXIT > 0 THEN OnEditCharacter = EVENT_QUIT: EXIT DO
+        IF EXIT > 0 THEN
+            OnEditCharacter = EVENT_QUIT
+            EXIT DO
+        END IF
     LOOP
 END FUNCTION
 
@@ -969,6 +968,7 @@ END FUNCTION
 
 ' This sets up the Window tile based on several things
 SUB SetWindowTitle
+    $CHECKING:OFF
     DIM windowTitle AS STRING
 
     ' First check if we have loaded a font file
@@ -989,6 +989,7 @@ SUB SetWindowTitle
     END IF
 
     TITLE windowTitle
+    $CHECKING:ON
 END SUB
 
 
@@ -1002,12 +1003,10 @@ END SUB
 ' Updates mxp & myp with position
 ' This is used by the character chooser
 FUNCTION GetMouseOverCharPosiion%% (mxp AS LONG, myp AS LONG)
+    $CHECKING:OFF
     DIM AS LONG x, y, fw, fh
-
-    GetMouseOverCharPosiion = FALSE
     fw = PSF1_GetFontWidth
     fh = PSF1_GetFontHeight
-
     FOR y = 0 TO 7
         FOR x = 0 TO 31
             IF PointCollidesWithRect(MOUSEX, MOUSEY, 8 + x * (fw + 2), 31 + y * (fh + 2), 9 + fw + x * (fw + 2), 32 + fh + y * (fh + 2)) THEN
@@ -1018,17 +1017,17 @@ FUNCTION GetMouseOverCharPosiion%% (mxp AS LONG, myp AS LONG)
             END IF
         NEXT
     NEXT
+    $CHECKING:ON
 END FUNCTION
 
 
 ' Draw the character selector using color c at xp, yp
 SUB DrawCharSelector (xp AS LONG, yp AS LONG, c AS UNSIGNED LONG)
-    DIM AS LONG fw, fh
-
-    fw = PSF1_GetFontWidth
-    fh = PSF1_GetFontHeight
-
+    $CHECKING:OFF
+    DIM fw AS LONG: fw = PSF1_GetFontWidth
+    DIM fh AS LONG: fh = PSF1_GetFontHeight
     LINE (8 + xp * (fw + 2), 31 + yp * (fh + 2))-(9 + fw + xp * (fw + 2), 32 + fh + yp * (fh + 2)), c, B
+    $CHECKING:ON
 END SUB
 
 
@@ -1036,67 +1035,85 @@ END SUB
 ' Updates mxp & myp with position
 ' This is used by the bitmap editor
 FUNCTION GetMouseOverCellPosition%% (mxp AS LONG, myp AS LONG)
-    DIM AS LONG x, y
-
-    GetMouseOverCellPosition = FALSE
-
-    FOR y = 0 TO PSF1_GetFontHeight - 1
-        FOR x = 0 TO PSF1_GetFontWidth - 1
-            IF PointCollidesWithRect(MOUSEX, MOUSEY, 8 + x * 14, 19 + y * 14, 22 + x * 14, 33 + y * 14) THEN
+    $CHECKING:OFF
+    DIM AS LONG x, y, w, h, w1, h1
+    w = PSF1_GetFontWidth
+    h = PSF1_GetFontHeight
+    WHILE y < h
+        h1 = y * 14
+        x = 0
+        WHILE x < w
+            w1 = x * 14
+            IF PointCollidesWithRect(MOUSEX, MOUSEY, 8 + w1, 19 + h1, 22 + w1, 33 + h1) THEN
                 mxp = x
                 myp = y
                 GetMouseOverCellPosition = TRUE
                 EXIT FUNCTION
             END IF
-        NEXT
-    NEXT
+            x = x + 1
+        WEND
+        y = y + 1
+    WEND
+    $CHECKING:ON
 END FUNCTION
 
 
-' Draw the character cell selector using color c at xe, ye
+' Draw the character cell selector using color c at (x, y)
 SUB DrawCellSelector (x AS LONG, y AS LONG, c AS UNSIGNED LONG)
-    LINE (8 + x * 14, 19 + y * 14)-(22 + x * 14, 33 + y * 14), c, B
+    $CHECKING:OFF
+    DIM w AS LONG: w = x * 14
+    DIM h AS LONG: h = y * 14
+    LINE (8 + w, 19 + h)-(22 + w, 33 + h), c, B
+    $CHECKING:ON
 END SUB
 
 
 ' This draws a single character pixel block
 SUB DrawCharBit (ch AS UNSIGNED BYTE, x AS LONG, y AS LONG)
-    DIM AS LONG xp, yp
-
-    xp = 9 + x * 14
-    yp = 20 + y * 14
+    $CHECKING:OFF
+    DIM xp AS LONG: xp = 9 + x * 14
+    DIM yp AS LONG: yp = 20 + y * 14
     IF PSF1_GetGlyphPixel(ch, x, y) THEN
         LINE (xp, yp)-(xp + 12, yp + 12), Yellow, BF
     ELSE
         LINE (xp, yp)-(xp + 12, yp + 12), Navy, BF
     END IF
+    $CHECKING:ON
 END SUB
 
 
 ' Draw the character bitmap for editing
 SUB DrawCharBitmap (ch AS UNSIGNED BYTE)
-    DIM AS LONG x, y
-
-    FOR y = 0 TO PSF1_GetFontHeight - 1
-        FOR x = 0 TO PSF1_GetFontWidth - 1
+    $CHECKING:OFF
+    DIM AS LONG x, y, w, h
+    w = PSF1_GetFontWidth
+    h = PSF1_GetFontHeight
+    WHILE y < h
+        x = 0
+        WHILE x < w
             DrawCharBit ch, x, y
-        NEXT
-    NEXT
+            x = x + 1
+        WEND
+        y = y + 1
+    WEND
+    $CHECKING:ON
 END SUB
 
 
 ' This draws a grid of the same character for demo purpose on the edit screen
 SUB DrawDemo
-    DIM AS LONG x, y
-
+    $CHECKING:OFF
+    DIM AS LONG x, y, w, h
+    w = PSF1_GetFontWidth
+    h = PSF1_GetFontHeight
     COLOR White, Black
-
     ' Draw the character on the right side using the font rending code
-    FOR y = 32 TO 32 + 12 * PSF1_GetFontHeight STEP PSF1_GetFontHeight
-        FOR x = 208 TO 208 + 13 * PSF1_GetFontWidth STEP PSF1_GetFontWidth
+    FOR y = 32 TO 32 + 12 * h STEP h
+        FOR x = 208 TO 208 + 13 * w STEP w
             PSF1_DrawCharacter ubFontCharacter, x, y
         NEXT
     NEXT
+    $CHECKING:ON
 END SUB
 
 
@@ -1130,7 +1147,9 @@ END SUB
 
 ' Point & box collision test for mouse
 FUNCTION PointCollidesWithRect%% (x AS LONG, y AS LONG, l AS LONG, t AS LONG, r AS LONG, b AS LONG)
+    $CHECKING:OFF
     PointCollidesWithRect = (x >= l AND x <= r AND y >= t AND y <= b)
+    $CHECKING:ON
 END FUNCTION
 
 

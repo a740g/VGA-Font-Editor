@@ -27,24 +27,25 @@ This is a cross-platform editor and library for VGA ROM fonts. This has code for
 
 ```VB
 ' For rendering
-FUNCTION PSF1_ReadFont%% (sFile As String, psf As PSFType)
-SUB PSF1_SetCurrentFont (psf As PSFType)
+FUNCTION PSF1_LoadFontFromMemory%% (buffer AS STRING, psf AS PSF1Type)
+FUNCTION PSF1_LoadFontFromPath%% (fileName AS STRING, psf AS PSF1Type)
+SUB PSF1_SetCurrentFont (psf AS PSF1Type)
 FUNCTION PSF1_GetFontWidth~%%
 FUNCTION PSF1_GetFontHeight~%%
-FUNCTION PSF1_GetDrawStringWidth& (text As String)
-SUB PSF1_DrawCharacter (cp As Unsigned Byte, x As Long, y As Long)
-SUB PSF1_DrawString (text As String, x As Long, y As Long)
+FUNCTION PSF1_GetDrawStringWidth& (text AS STRING)
+SUB PSF1_DrawCharacter (cp AS _UNSIGNED _BYTE, x AS LONG, y AS LONG)
+SUB PSF1_DrawString (text AS STRING, x AS LONG, y AS LONG)
 
 ' Used by the editor
-SUB PSF1_SetFontHeight (h As Unsigned Byte)
+SUB PSF1_SetFontHeight (h AS _UNSIGNED _BYTE)
 FUNCTION PSF1_GetFont$
-SUB PSF1_SetFont (buffer AS STRING)
-FUNCTION PSF1_GetGlyphBitmap$ (cp As Unsigned Byte)
-SUB PSF1_SetGlyphBitmap (cp As Unsigned Byte, bmp As String)
-FUNCTION PSF1_GetGlyphPixel%% (cp As Unsigned Byte, x As Long, y As Long)
-SUB PSF1_SetGlyphPixel (cp As Unsigned Byte, x As Long, y As Long, b As Byte)
-SUB PSF1_SetGlyphDefaultBitmap (cp As Unsigned Byte)
-FUNCTION PSF1_WriteFont%% (sFile As String)
+FUNCTION PSF1_SetFont%% (buffer AS STRING)
+FUNCTION PSF1_GetGlyphBitmap$ (cp AS _UNSIGNED _BYTE)
+SUB PSF1_SetGlyphBitmap (cp AS _UNSIGNED _BYTE, bmp AS STRING)
+FUNCTION PSF1_GetGlyphPixel%% (cp AS _UNSIGNED _BYTE, x AS LONG, y AS LONG)
+SUB PSF1_SetGlyphPixel (cp AS _UNSIGNED _BYTE, x AS LONG, y AS LONG, b AS _BYTE)
+SUB PSF1_SetGlyphDefaultBitmap (cp AS _UNSIGNED _BYTE)
+FUNCTION PSF1_SaveFont%% (fileName AS STRING)
 ```
 
 ## FAQ
@@ -145,7 +146,7 @@ What are these PSF files?
 
 ## NOTES
 
-- This requires the latest version of [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe/releases)
+- This requires the latest version of [QB64-PE](https://github.com/QB64-Phoenix-Edition/QB64pe/releases/latest)
 - When you clone a repository that contains submodules, the submodules are not automatically cloned by default
 - You will need to use the `git submodule update --init --recursive` to initialize, fetch and checkout git submodules
 
