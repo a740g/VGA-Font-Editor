@@ -28,7 +28,7 @@ This is a cross-platform editor and library for VGA ROM fonts. This has code for
 ```VB
 ' For rendering
 FUNCTION PSF1_LoadFontFromMemory%% (buffer AS STRING, psf AS PSF1Type)
-FUNCTION PSF1_LoadFontFromPath%% (fileName AS STRING, psf AS PSF1Type)
+FUNCTION PSF1_LoadFontFromFile%% (fileName AS STRING, psf AS PSF1Type)
 SUB PSF1_SetCurrentFont (psf AS PSF1Type)
 FUNCTION PSF1_GetFontWidth~%%
 FUNCTION PSF1_GetFontHeight~%%

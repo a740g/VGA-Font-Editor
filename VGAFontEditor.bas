@@ -417,7 +417,7 @@ FUNCTION OnCommandLine%%
         IF FILEEXISTS(sFontFile) THEN
             ' Read in the font
             DIM psf AS PSF1Type
-            IF PSF1_LoadFontFromPath(sFontFile, psf) THEN
+            IF PSF1_LoadFontFromFile(sFontFile, psf) THEN
                 PSF1_SetCurrentFont psf
                 ResizeClipboard
                 SetWindowTitle
@@ -451,7 +451,7 @@ FUNCTION OnLoadFont%%
 
     ' Read in the font
     DIM psf AS PSF1Type
-    IF PSF1_LoadFontFromPath(tmpFilename, psf) THEN
+    IF PSF1_LoadFontFromFile(tmpFilename, psf) THEN
         PSF1_SetCurrentFont psf
         ResizeClipboard
         sFontFile = tmpFilename
