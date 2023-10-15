@@ -52,7 +52,6 @@ CONST EVENT_PREVIEW = 7
 CONST EVENT_SAVE = 8
 CONST EVENT_IMPORT = 9
 ' Font metric limits
-CONST FONT_WIDTH = 8
 CONST FONT_HEIGHT_MIN = 8
 CONST FONT_HEIGHT_MAX = 32
 ' Screen properties
@@ -144,7 +143,7 @@ FUNCTION OnWelcomeScreen%%
     DIM oldPM AS LONG: oldPM = PRINTMODE
 
     ' Now create a new image
-    DIM img AS LONG: img = NEWIMAGE(80 * FONT_WIDTH, 31 * 16, 32) ' we'll allocate some extra height to avoid any scrolling
+    DIM img AS LONG: img = NEWIMAGE(80 * PSF1_FONT_WIDTH, 31 * 16, 32) ' we'll allocate some extra height to avoid any scrolling
 
     ' Change destination and render the ANSI art
     DEST img
@@ -153,7 +152,7 @@ FUNCTION OnWelcomeScreen%%
     PrintANSI buffer
 
     ' Capture rendered image to another image
-    DIM imgANSI AS LONG: imgANSI = NEWIMAGE(80 * FONT_WIDTH, 30 * 16, 32)
+    DIM imgANSI AS LONG: imgANSI = NEWIMAGE(80 * PSF1_FONT_WIDTH, 30 * 16, 32)
     PUTIMAGE (0, 0), img, imgANSI ' any excess height will simply get clipped
     CLEARCOLOR Black, imgANSI ' set all black pixels to be transparent
 
@@ -168,7 +167,7 @@ FUNCTION OnWelcomeScreen%%
     COLOR Lime: PRINT "ESC";: COLOR LightGray: PRINT " ...........";: COLOR Yellow: PRINT " QUIT"
 
     ' Capture the rendered image
-    DIM imgMenu AS LONG: imgMenu = NEWIMAGE(20 * FONT_WIDTH, 5 * 16, 32)
+    DIM imgMenu AS LONG: imgMenu = NEWIMAGE(20 * PSF1_FONT_WIDTH, 5 * 16, 32)
     PUTIMAGE (0, 0), img, imgMenu ' all excess stuff will get clipped
 
     ' Do some cleanup
@@ -319,7 +318,7 @@ END FUNCTION
 
 
 ' Imports a font from a font atlas (image)
-' The image format must be supported by QB64
+' The image format must be supported by QB64-PE
 FUNCTION OnImportAtlas%%
     ' Attempt to save the font if there is one
     OnImportAtlas = OnSaveFont
@@ -342,7 +341,7 @@ FUNCTION OnImportAtlas%%
     END IF
 
     ' Calculate the optimal font height (font width is always 8)
-    DIM fntHeight AS LONG: fntHeight = (HEIGHT(img) * FONT_WIDTH) / WIDTH(img)
+    DIM fntHeight AS LONG: fntHeight = (HEIGHT(img) * PSF1_FONT_WIDTH) / WIDTH(img)
 
     ' Check for insane values
     IF fntHeight < FONT_HEIGHT_MIN OR fntHeight > FONT_HEIGHT_MAX THEN
@@ -353,7 +352,7 @@ FUNCTION OnImportAtlas%%
     END IF
 
     ' Create the atlas where we can copy from
-    DIM atlas AS LONG: atlas = NEWIMAGE(FONT_WIDTH * 16, fntHeight * 16, 256)
+    DIM atlas AS LONG: atlas = NEWIMAGE(PSF1_FONT_WIDTH * 16, fntHeight * 16, 256)
     IF atlas >= -1 THEN
         MESSAGEBOX APP_NAME, "Failed to create font atlas image!", "error"
         FREEIMAGE img ' free the image
@@ -377,10 +376,10 @@ FUNCTION OnImportAtlas%%
     ' Now copy all 256 characters
     DIM AS LONG c, sx, sy, x, y
     FOR c = 0 TO 255
-        sx = (c MOD 16) * FONT_WIDTH ' starting x of char c
+        sx = (c MOD 16) * PSF1_FONT_WIDTH ' starting x of char c
         sy = (c \ 16) * fntHeight ' starting y of char c
         FOR y = 0 TO fntHeight - 1
-            FOR x = 0 TO FONT_WIDTH - 1
+            FOR x = 0 TO PSF1_FONT_WIDTH - 1
                 PSF1_SetGlyphPixel c, x, y, POINT(sx + x, sy + y) <> 0
             NEXT
         NEXT
