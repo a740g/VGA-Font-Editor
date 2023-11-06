@@ -12,6 +12,7 @@
 '$INCLUDE:'include/FileOps.bi'
 '$INCLUDE:'include/TimeOps.bi'
 '$INCLUDE:'include/Base64.bi'
+'$INCLUDE:'include/GraphicOps.bi'
 '$INCLUDE:'include/ANSIPrint.bi'
 '$INCLUDE:'include/VGAFont.bi'
 '-----------------------------------------------------------------------------------------------------------------------
@@ -23,17 +24,17 @@ $NOPREFIX
 $RESIZE:SMOOTH
 $COLOR:32
 $EXEICON:'.\VGAFontEditor.ico'
-$VERSIONINFO:CompanyName=Samuel Gomes
-$VERSIONINFO:FileDescription=VGA Font Editor executable
-$VERSIONINFO:InternalName=VGAFontEditor
-$VERSIONINFO:LegalCopyright=Copyright (c) 2023 Samuel Gomes
-$VERSIONINFO:LegalTrademarks=All trademarks are property of their respective owners
-$VERSIONINFO:OriginalFilename=VGAFontEditor.exe
-$VERSIONINFO:ProductName=VGA Font Editor
-$VERSIONINFO:Web=https://github.com/a740g
-$VERSIONINFO:Comments=https://github.com/a740g
-$VERSIONINFO:FILEVERSION#=4,2,0,0
-$VERSIONINFO:ProductVersion=4,2,0,0
+$VERSIONINFO:CompanyName='Samuel Gomes'
+$VERSIONINFO:FileDescription='VGA Font Editor executable'
+$VERSIONINFO:InternalName='VGAFontEditor'
+$VERSIONINFO:LegalCopyright='Copyright (c) 2023 Samuel Gomes'
+$VERSIONINFO:LegalTrademarks='All trademarks are property of their respective owners'
+$VERSIONINFO:OriginalFilename='VGAFontEditor.exe'
+$VERSIONINFO:ProductName='VGA Font Editor'
+$VERSIONINFO:Web='https://github.com/a740g'
+$VERSIONINFO:Comments='https://github.com/a740g'
+$VERSIONINFO:FILEVERSION#=4,2,1,0
+$VERSIONINFO:PRODUCTVERSION#=4,2,1,0
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
@@ -80,7 +81,7 @@ CONTROLCHR OFF ' turn off control characters
 SCREEN NEWIMAGE(SCREEN_WIDTH, SCREEN_HEIGHT, 32) ' switch to graphics mode
 SetWindowTitle ' set app title
 ALLOWFULLSCREEN SQUAREPIXELS , SMOOTH ' allow the program window to run fullscreen with Alt+Enter
-SetRandomSeed TIMER ' seed randomizer
+Math_SetRandomSeed TIMER ' seed randomizer
 
 DIM event AS BYTE: event = EVENT_COMMAND ' default's to command line event on program entry
 
@@ -149,7 +150,7 @@ FUNCTION OnWelcomeScreen%%
     DEST img
     RESTORE Data_vga_font_editor_logo_3_ans_3737
     DIM buffer AS STRING: buffer = LoadResource
-    PrintANSI buffer
+    ANSI_Print buffer
 
     ' Capture rendered image to another image
     DIM imgANSI AS LONG: imgANSI = NEWIMAGE(80 * PSF1_FONT_WIDTH, 30 * 16, 32)
@@ -201,13 +202,13 @@ FUNCTION OnWelcomeScreen%%
 
         FOR i = 1 TO STAR_COUNT
             IF starP(i).x < 0 OR starP(i).x >= SCREEN_WIDTH OR starP(i).y < 0 OR starP(i).y >= SCREEN_HEIGHT THEN
-                starP(i).x = GetRandomBetween(0, SCREEN_WIDTH - 1)
-                starP(i).y = GetRandomBetween(0, SCREEN_HEIGHT - 1)
+                starP(i).x = Math_GetRandomBetween(0, SCREEN_WIDTH - 1)
+                starP(i).y = Math_GetRandomBetween(0, SCREEN_HEIGHT - 1)
                 starP(i).z = 4096!
-                starC(i) = RGB32(GetRandomBetween(64, 255), GetRandomBetween(64, 255), GetRandomBetween(64, 255))
+                starC(i) = RGB32(Math_GetRandomBetween(64, 255), Math_GetRandomBetween(64, 255), Math_GetRandomBetween(64, 255))
             END IF
 
-            PSET (starP(i).x, starP(i).y), starC(i)
+            Graphics_DrawPixel starP(i).x, starP(i).y, starC(i)
 
             starP(i).z = starP(i).z + 0.5!
             starP(i).x = ((starP(i).x - SCREEN_HALF_WIDTH) * (starP(i).z / 4096!)) + SCREEN_HALF_WIDTH
@@ -502,7 +503,7 @@ FUNCTION OnChooseCharacter%%
     DIM ticks AS UNSIGNED INTEGER64, blinkState AS BYTE
 
     ' Save the current tick
-    ticks = GetTicks
+    ticks = Time_GetTicks
 
     CLS , Black
 
@@ -617,8 +618,8 @@ FUNCTION OnChooseCharacter%%
 
             CASE ELSE
                 ' Blink the selector at regular intervals
-                IF GetTicks - ticks > BLINK_TICKS THEN
-                    ticks = GetTicks
+                IF Time_GetTicks - ticks > BLINK_TICKS THEN
+                    ticks = Time_GetTicks
                     blinkState = NOT blinkState
 
                     IF blinkState THEN
@@ -642,7 +643,7 @@ FUNCTION OnEditCharacter%%
     DIM ticks AS UNSIGNED INTEGER64, blinkState AS BYTE
 
     ' Save the current tick
-    ticks = GetTicks
+    ticks = Time_GetTicks
 
     CLS , Black
 
@@ -912,8 +913,8 @@ FUNCTION OnEditCharacter%%
 
             CASE ELSE
                 ' Blink the selector at regular intervals
-                IF GetTicks - ticks > BLINK_TICKS THEN
-                    ticks = GetTicks
+                IF Time_GetTicks - ticks > BLINK_TICKS THEN
+                    ticks = Time_GetTicks
                     blinkState = NOT blinkState
 
                     IF blinkState THEN
@@ -1025,7 +1026,7 @@ SUB DrawCharSelector (xp AS LONG, yp AS LONG, c AS UNSIGNED LONG)
     $CHECKING:OFF
     DIM fw AS LONG: fw = PSF1_GetFontWidth
     DIM fh AS LONG: fh = PSF1_GetFontHeight
-    LINE (8 + xp * (fw + 2), 31 + yp * (fh + 2))-(9 + fw + xp * (fw + 2), 32 + fh + yp * (fh + 2)), c, B
+    Graphics_DrawRectangle 8 + xp * (fw + 2), 31 + yp * (fh + 2), 9 + fw + xp * (fw + 2), 32 + fh + yp * (fh + 2), c
     $CHECKING:ON
 END SUB
 
@@ -1062,7 +1063,7 @@ SUB DrawCellSelector (x AS LONG, y AS LONG, c AS UNSIGNED LONG)
     $CHECKING:OFF
     DIM w AS LONG: w = x * 14
     DIM h AS LONG: h = y * 14
-    LINE (8 + w, 19 + h)-(22 + w, 33 + h), c, B
+    Graphics_DrawRectangle 8 + w, 19 + h, 22 + w, 33 + h, c
     $CHECKING:ON
 END SUB
 
@@ -1073,9 +1074,9 @@ SUB DrawCharBit (ch AS UNSIGNED BYTE, x AS LONG, y AS LONG)
     DIM xp AS LONG: xp = 9 + x * 14
     DIM yp AS LONG: yp = 20 + y * 14
     IF PSF1_GetGlyphPixel(ch, x, y) THEN
-        LINE (xp, yp)-(xp + 12, yp + 12), Yellow, BF
+        Graphics_DrawFilledRectangle xp, yp, xp + 12, yp + 12, Yellow
     ELSE
-        LINE (xp, yp)-(xp + 12, yp + 12), Navy, BF
+        Graphics_DrawFilledRectangle xp, yp, xp + 12, yp + 12, Navy
     END IF
     $CHECKING:ON
 END SUB
@@ -1118,28 +1119,28 @@ END SUB
 
 ' Draw a box using box drawing characters and optionally puts a caption
 SUB DrawTextBox (l AS LONG, t AS LONG, r AS LONG, b AS LONG, sCaption AS STRING)
-    DIM AS LONG i, inBoxWidth
-
     ' Calculate the "internal" box width
-    inBoxWidth = r - l - 1
+    DIM inBoxWidth AS LONG: inBoxWidth = r - l - 1
 
     ' Draw the top line
-    LOCATE t, l: PRINT CHR$(218); STRING$(inBoxWidth, 196); CHR$(191);
+    DIM buffer196 AS STRING: buffer196 = STRING$(inBoxWidth, 196)
+    LOCATE t, l: PRINT CHR$(218); buffer196; CHR$(191);
 
     ' Draw the sides
-    FOR i = t + 1 TO b - 1
-        LOCATE i, l: PRINT CHR$(179); SPACE$(inBoxWidth); CHR$(179);
-    NEXT
+    DIM buffer32 AS STRING: buffer32 = SPACE$(inBoxWidth)
+    DIM i AS LONG: FOR i = t + 1 TO b - 1
+        LOCATE i, l: PRINT CHR$(179); buffer32; CHR$(179);
+    NEXT i
 
     ' Draw the bottom line
-    LOCATE b, l: PRINT CHR$(192); STRING$(inBoxWidth, 196); CHR$(217);
+    LOCATE b, l: PRINT CHR$(192); buffer196; CHR$(217);
 
     ' Set the caption if specified
     IF LEN(sCaption) <> NULL THEN
-        COLOR BACKGROUNDCOLOR, DEFAULTCOLOR
+        COLOR BACKGROUNDCOLOR, DEFAULTCOLOR ' reverse colors
         LOCATE t, l + inBoxWidth \ 2 - LEN(sCaption) \ 2
         PRINT " "; sCaption; " ";
-        COLOR BACKGROUNDCOLOR, DEFAULTCOLOR
+        COLOR BACKGROUNDCOLOR, DEFAULTCOLOR ' undo reverse
     END IF
 END SUB
 
@@ -1176,8 +1177,8 @@ END SUB
 '-----------------------------------------------------------------------------------------------------------------------
 '$INCLUDE:'include/StringOps.bas'
 '$INCLUDE:'include/FileOps.bas'
-'$INCLUDE:'include/TimeOps.bas'
 '$INCLUDE:'include/Base64.bas'
+'$INCLUDE:'include/GraphicOps.bas'
 '$INCLUDE:'include/ANSIPrint.bas'
 '$INCLUDE:'include/VGAFont.bas'
 '-----------------------------------------------------------------------------------------------------------------------
