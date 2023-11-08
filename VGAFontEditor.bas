@@ -59,7 +59,7 @@ CONST FONT_HEIGHT_MAX = 32
 CONST SCREEN_WIDTH = 640
 CONST SCREEN_HEIGHT = 480
 ' FPS
-CONST UPDATES_PER_SECOND = 30
+CONST UPDATES_PER_SECOND = 60
 ' Blinky stuff
 CONST BLINK_TICKS = 300
 '-----------------------------------------------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ FUNCTION OnWelcomeScreen%%
     ' Change destination and render the ANSI art
     DEST img
     RESTORE Data_vga_font_editor_logo_3_ans_3737
-    DIM buffer AS STRING: buffer = LoadResource
+    DIM buffer AS STRING: buffer = Base64_LoadResource
     ANSI_Print buffer
 
     ' Capture rendered image to another image
@@ -186,6 +186,7 @@ FUNCTION OnWelcomeScreen%%
     CONST STAR_COUNT = 1024 ' the maximum stars that we can show
     DIM starP(1 TO STAR_COUNT) AS Vector3FType
     DIM starC(1 TO STAR_COUNT) AS UNSIGNED LONG
+    DIM starA(1 TO STAR_COUNT) AS SINGLE
     DIM AS LONG i, k
     DIM e AS BYTE
 
@@ -211,8 +212,10 @@ FUNCTION OnWelcomeScreen%%
             Graphics_DrawPixel starP(i).x, starP(i).y, starC(i)
 
             starP(i).z = starP(i).z + 0.5!
-            starP(i).x = ((starP(i).x - SCREEN_HALF_WIDTH) * (starP(i).z / 4096!)) + SCREEN_HALF_WIDTH
-            starP(i).y = ((starP(i).y - SCREEN_HALF_HEIGHT) * (starP(i).z / 4096!)) + SCREEN_HALF_HEIGHT
+            starA(i) = starA(i) + 0.005!
+            DIM zd AS SINGLE: zd = starP(i).z / 4096!
+            starP(i).x = ((starP(i).x - SCREEN_HALF_WIDTH) * zd) + SCREEN_HALF_WIDTH + COS(starA(i) * 0.5!)
+            starP(i).y = ((starP(i).y - SCREEN_HALF_HEIGHT) * zd) + SCREEN_HALF_HEIGHT + SIN(starA(i) * 1.5!)
         NEXT
 
         PUTIMAGE (0, 0), imgANSI
