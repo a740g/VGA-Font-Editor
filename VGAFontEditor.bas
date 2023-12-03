@@ -149,7 +149,7 @@ FUNCTION OnWelcomeScreen%%
     ' Change destination and render the ANSI art
     DEST img
     RESTORE Data_vga_font_editor_logo_3_ans_3737
-    DIM buffer AS STRING: buffer = Base64_LoadResource
+    DIM buffer AS STRING: buffer = Base64_LoadResourceData
     ANSI_Print buffer
 
     ' Capture rendered image to another image
@@ -347,16 +347,28 @@ FUNCTION OnImportAtlas%%
     ' Calculate the optimal font height (font width is always 8)
     DIM fntHeight AS LONG: fntHeight = (HEIGHT(img) * PSF1_FONT_WIDTH) / WIDTH(img)
 
+    ' Assume we have a 16 x 16 glyph atlas
+    DIM glyphsW AS LONG: glyphsW = 16
+    DIM glyphsH AS LONG: glyphsH = 16
+
     ' Check for insane values
     IF fntHeight < FONT_HEIGHT_MIN OR fntHeight > FONT_HEIGHT_MAX THEN
-        MESSAGEBOX APP_NAME, "Font height too large or small!", "error"
-        FREEIMAGE img ' free the image
-        IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' Do nothing if no font file is loaded
-        EXIT FUNCTION ' leave if we failed to load the image
+        ' This could be a 32 x 8 glyph SDL font atlas
+        glyphsW = 32
+        glyphsH = 8
+        fntHeight = (HEIGHT(img) * PSF1_FONT_WIDTH * glyphsW) / (WIDTH(img) * glyphsH)
+
+        ' Check again
+        IF fntHeight < FONT_HEIGHT_MIN OR fntHeight > FONT_HEIGHT_MAX THEN
+            MESSAGEBOX APP_NAME, "Font height" + STR$(fntHeight) + " not supported!", "error"
+            FREEIMAGE img ' free the image
+            IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' Do nothing if no font file is loaded
+            EXIT FUNCTION ' leave if we failed to load the image
+        END IF
     END IF
 
     ' Create the atlas where we can copy from
-    DIM atlas AS LONG: atlas = NEWIMAGE(PSF1_FONT_WIDTH * 16, fntHeight * 16, 256)
+    DIM atlas AS LONG: atlas = NEWIMAGE(PSF1_FONT_WIDTH * glyphsW, fntHeight * glyphsH, 256)
     IF atlas >= -1 THEN
         MESSAGEBOX APP_NAME, "Failed to create font atlas image!", "error"
         FREEIMAGE img ' free the image
@@ -380,8 +392,8 @@ FUNCTION OnImportAtlas%%
     ' Now copy all 256 characters
     DIM AS LONG c, sx, sy, x, y
     FOR c = 0 TO 255
-        sx = (c MOD 16) * PSF1_FONT_WIDTH ' starting x of char c
-        sy = (c \ 16) * fntHeight ' starting y of char c
+        sx = (c MOD glyphsW) * PSF1_FONT_WIDTH ' starting x of char c
+        sy = (c \ glyphsW) * fntHeight ' starting y of char c
         FOR y = 0 TO fntHeight - 1
             FOR x = 0 TO PSF1_FONT_WIDTH - 1
                 PSF1_SetGlyphPixel c, x, y, POINT(sx + x, sy + y) <> 0
