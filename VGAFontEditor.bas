@@ -295,7 +295,7 @@ FUNCTION OnNewFont%%
         EXIT FUNCTION
     END IF
 
-    sFontFile = EMPTY_STRING
+    sFontFile = STRING_EMPTY
     bFontChanged = TRUE
     PSF1_SetFontHeight ubFontHeight
     ResizeClipboard
@@ -313,7 +313,7 @@ FUNCTION ImportRaw%% (fileName AS STRING)
     IF NOT PSF1_SetFont(buffer) THEN EXIT FUNCTION
 
     ResizeClipboard
-    sFontFile = EMPTY_STRING
+    sFontFile = STRING_EMPTY
     bFontChanged = TRUE
     SetWindowTitle
 
@@ -405,7 +405,7 @@ FUNCTION OnImportAtlas%%
     FREEIMAGE atlas
     FREEIMAGE img
 
-    sFontFile = EMPTY_STRING
+    sFontFile = STRING_EMPTY
     bFontChanged = TRUE
     SetWindowTitle
 END FUNCTION
@@ -438,7 +438,7 @@ FUNCTION OnCommandLine%%
                 SetWindowTitle
             ELSE
                 MESSAGEBOX APP_NAME, "Failed to load " + sFontFile + "!", "error"
-                sFontFile = EMPTY_STRING
+                sFontFile = STRING_EMPTY
             END IF
         ELSE
             ' If this is a new file ask use for specs
@@ -824,7 +824,7 @@ FUNCTION OnEditCharacter%%
                 ' Flag font changed
                 bFontChanged = TRUE
 
-                PSF1_SetGlyphBitmap ubFontCharacter, ReverseString(PSF1_GetGlyphBitmap(ubFontCharacter))
+                PSF1_SetGlyphBitmap ubFontCharacter, String_Reverse(PSF1_GetGlyphBitmap(ubFontCharacter))
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
