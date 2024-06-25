@@ -40,6 +40,7 @@ IF COMMANDCOUNT < 1 THEN
     PRINT " * This will create filespec.psf"
     PRINT " * Bulk convert files using wildcards"
     PRINT " * If filespec.psf already exists, then it will not be overwritten"
+    PRINT " * The tools assumes that the file includes all 256 glyphs"
     PRINT
     SYSTEM
 END IF
@@ -65,9 +66,6 @@ SYSTEM
 ' FUNCTIONS AND SUBROUTINES
 '-----------------------------------------------------------------------------------------------------------------------
 FUNCTION ConvertBin2PSF& (sBinFileName AS STRING, sPSFFileName AS STRING)
-    ' Assume failure
-    ConvertBin2PSF = 0
-
     IF FILEEXISTS(sBinFileName) AND NOT FILEEXISTS(sPSFFileName) THEN
         ' Open the raw ROM font file
         DIM binFileHandle AS LONG

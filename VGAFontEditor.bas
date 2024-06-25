@@ -335,10 +335,12 @@ FUNCTION OnImportAtlas%%
 
     DIM img AS LONG: img = LOADIMAGE(imgFileName, 256) ' load as 8bpp image
     IF img >= -1 THEN
+        ' if not load freetype font then
         ' Loading image failed, assume it is a raw ROM font dump and import it
         IF NOT ImportRaw(imgFileName) THEN
             MESSAGEBOX APP_NAME, "Failed to load image / raw font dump: " + imgFileName, "error"
         END IF
+        ' end if freetype font
 
         IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' do nothing if no font file is loaded
         EXIT FUNCTION
