@@ -3,7 +3,13 @@
 ' See https://github.com/spacerace/romfont to learn more about VGA ROM fonts or character ROM
 ' See https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html to learn about the PSF format
 '
-' Copyright (c) 2023 Samuel Gomes
+' Copyright (c) 2024 Samuel Gomes
+'-----------------------------------------------------------------------------------------------------------------------
+
+'-----------------------------------------------------------------------------------------------------------------------
+' METACOMMANDS
+'-----------------------------------------------------------------------------------------------------------------------
+$CONSOLE:ONLY
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
@@ -13,24 +19,17 @@
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
-' METACOMMANDS
-'-----------------------------------------------------------------------------------------------------------------------
-$NOPREFIX
-$CONSOLE:ONLY
-'-----------------------------------------------------------------------------------------------------------------------
-
-'-----------------------------------------------------------------------------------------------------------------------
 ' PROGRAM ENTRY POINT
 '-----------------------------------------------------------------------------------------------------------------------
 ' Change to the directory specified by the environment
-CHDIR STARTDIR$
+CHDIR _STARTDIR$
 
 ' If there are no command line parameters just show some info and exit
-IF COMMANDCOUNT < 1 THEN
+IF _COMMANDCOUNT < 1 THEN
     PRINT
     PRINT "Bin2PSF: Converts raw VGA ROM fonts to PSF1 (PC Screen Font v1)"
     PRINT
-    PRINT "Copyright (c) 2023 Samuel Gomes"
+    PRINT "Copyright (c) 2024 Samuel Gomes"
     PRINT
     PRINT "https://github.com/a740g"
     PRINT
@@ -45,11 +44,12 @@ IF COMMANDCOUNT < 1 THEN
     SYSTEM
 END IF
 
+PRINT
+
 DIM AS LONG i, h
 
-PRINT
 ' Convert all files requested
-FOR i = 1 TO COMMANDCOUNT
+FOR i = 1 TO _COMMANDCOUNT
     PRINT "Attempting to convert "; COMMAND$(i); " ... ";
     h = ConvertBin2PSF(COMMAND$(i), COMMAND$(i) + ".psf")
     IF h > 0 THEN
@@ -66,7 +66,7 @@ SYSTEM
 ' FUNCTIONS AND SUBROUTINES
 '-----------------------------------------------------------------------------------------------------------------------
 FUNCTION ConvertBin2PSF& (sBinFileName AS STRING, sPSFFileName AS STRING)
-    IF FILEEXISTS(sBinFileName) AND NOT FILEEXISTS(sPSFFileName) THEN
+    IF _FILEEXISTS(sBinFileName) AND NOT _FILEEXISTS(sPSFFileName) THEN
         ' Open the raw ROM font file
         DIM binFileHandle AS LONG
         binFileHandle = FREEFILE
