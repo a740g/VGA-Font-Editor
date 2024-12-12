@@ -15,8 +15,8 @@ $VERSIONINFO:OriginalFilename='VGAFontEditor.exe'
 $VERSIONINFO:ProductName='VGA Font Editor'
 $VERSIONINFO:Web='https://github.com/a740g'
 $VERSIONINFO:Comments='https://github.com/a740g'
-$VERSIONINFO:FILEVERSION#=4,2,2,0
-$VERSIONINFO:PRODUCTVERSION#=4,2,2,0
+$VERSIONINFO:FILEVERSION#=4,2,3,0
+$VERSIONINFO:PRODUCTVERSION#=4,2,3,0
 $EXEICON:'.\VGAFontEditor.ico'
 '-----------------------------------------------------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ FUNCTION OnWelcomeScreen%%
         CLS , BGRA_BLACK ' clear the page
 
         FOR i = 1 TO STAR_COUNT
-            IF starP(i).x < 0 OR starP(i).x >= SCREEN_WIDTH OR starP(i).y < 0 OR starP(i).y >= SCREEN_HEIGHT THEN
+            IF starP(i).x < 0 _ORELSE starP(i).x >= SCREEN_WIDTH _ORELSE starP(i).y < 0 _ORELSE starP(i).y >= SCREEN_HEIGHT THEN
                 starP(i).x = Math_GetRandomBetween(0, SCREEN_WIDTH - 1)
                 starP(i).y = Math_GetRandomBetween(0, SCREEN_HEIGHT - 1)
                 starP(i).z = 4096!
@@ -228,19 +228,19 @@ FUNCTION OnWelcomeScreen%%
         k = _KEYHIT
 
         SELECT CASE k
-            CASE KEY_F1
+            CASE _KEY_F1
                 e = EVENT_LOAD
 
-            CASE KEY_F2
+            CASE _KEY_F2
                 e = EVENT_NEW
 
-            CASE KEY_F3
+            CASE _KEY_F3
                 e = EVENT_IMPORT
 
-            CASE KEY_ENTER
+            CASE _KEY_ENTER
                 IF PSF1_GetFontHeight > 0 THEN e = EVENT_CHOOSE
 
-            CASE KEY_ESCAPE
+            CASE _KEY_ESC
                 e = EVENT_QUIT
 
             CASE ELSE
@@ -286,7 +286,7 @@ FUNCTION OnNewFont%%
 
     ubFontHeight = VAL(_INPUTBOX$(APP_NAME, "Enter new font height in pixels (8 - 32):", STR$(ubFontHeight)))
 
-    IF ubFontHeight < FONT_HEIGHT_MIN OR ubFontHeight > FONT_HEIGHT_MAX THEN
+    IF ubFontHeight < FONT_HEIGHT_MIN _ORELSE ubFontHeight > FONT_HEIGHT_MAX THEN
         IF PSF1_GetFontHeight <= 0 THEN
             OnNewFont = EVENT_NONE
         ELSE
@@ -296,8 +296,8 @@ FUNCTION OnNewFont%%
         EXIT FUNCTION
     END IF
 
-    sFontFile = STRING_EMPTY
-    bFontChanged = TRUE
+    sFontFile = _STR_EMPTY
+    bFontChanged = _TRUE
     PSF1_SetFontHeight ubFontHeight
     ResizeClipboard
     SetWindowTitle
@@ -314,11 +314,11 @@ FUNCTION ImportRaw%% (fileName AS STRING)
     IF NOT PSF1_SetFont(buffer) THEN EXIT FUNCTION
 
     ResizeClipboard
-    sFontFile = STRING_EMPTY
-    bFontChanged = TRUE
+    sFontFile = _STR_EMPTY
+    bFontChanged = _TRUE
     SetWindowTitle
 
-    ImportRaw = TRUE
+    ImportRaw = _TRUE
 END FUNCTION
 
 
@@ -355,14 +355,14 @@ FUNCTION OnImportAtlas%%
     DIM glyphsH AS LONG: glyphsH = 16
 
     ' Check for insane values
-    IF fntHeight < FONT_HEIGHT_MIN OR fntHeight > FONT_HEIGHT_MAX THEN
+    IF fntHeight < FONT_HEIGHT_MIN _ORELSE fntHeight > FONT_HEIGHT_MAX THEN
         ' This could be a 32 x 8 glyph SDL font atlas
         glyphsW = 32
         glyphsH = 8
         fntHeight = (_HEIGHT(img) * PSF1_FONT_WIDTH * glyphsW) / (_WIDTH(img) * glyphsH)
 
         ' Check again
-        IF fntHeight < FONT_HEIGHT_MIN OR fntHeight > FONT_HEIGHT_MAX THEN
+        IF fntHeight < FONT_HEIGHT_MIN _ORELSE fntHeight > FONT_HEIGHT_MAX THEN
             _MESSAGEBOX APP_NAME, "Font height" + STR$(fntHeight) + " not supported!", "error"
             _FREEIMAGE img ' free the image
             IF PSF1_GetFontHeight <= 0 THEN OnImportAtlas = EVENT_NONE ' Do nothing if no font file is loaded
@@ -408,8 +408,8 @@ FUNCTION OnImportAtlas%%
     _FREEIMAGE atlas
     _FREEIMAGE img
 
-    sFontFile = STRING_EMPTY
-    bFontChanged = TRUE
+    sFontFile = _STR_EMPTY
+    bFontChanged = _TRUE
     SetWindowTitle
 END FUNCTION
 
@@ -419,7 +419,7 @@ FUNCTION OnCommandLine%%
     OnCommandLine = EVENT_NONE ' Default to no event
 
     ' Check if any help is needed
-    IF COMMAND$(1) = "/?" OR COMMAND$(1) = "-?" THEN
+    IF COMMAND$(1) = "/?" _ORELSE COMMAND$(1) = "-?" THEN
         _MESSAGEBOX APP_NAME, APP_NAME + CHR$(13) + "Syntax: EDITFONT [fontfile.psf]" _
             + CHR$(13) + "    /?: Shows this message" _
             + STRING$(2, 13) + "Copyright (c) 2024 Samuel Gomes" _
@@ -441,7 +441,7 @@ FUNCTION OnCommandLine%%
                 SetWindowTitle
             ELSE
                 _MESSAGEBOX APP_NAME, "Failed to load " + sFontFile + "!", "error"
-                sFontFile = STRING_EMPTY
+                sFontFile = _STR_EMPTY
             END IF
         ELSE
             ' If this is a new file ask use for specs
@@ -473,7 +473,7 @@ FUNCTION OnLoadFont%%
         PSF1_SetCurrentFont psf
         ResizeClipboard
         sFontFile = tmpFilename
-        bFontChanged = FALSE
+        bFontChanged = _FALSE
         SetWindowTitle
     ELSE
         _MESSAGEBOX APP_NAME, "Failed to load " + tmpFilename + "!", "error"
@@ -506,7 +506,7 @@ FUNCTION OnSaveFont%%
 
         ' Save the font
         IF PSF1_SaveFont(sFontFile) THEN
-            bFontChanged = FALSE ' clear the font changed flag now
+            bFontChanged = _FALSE ' clear the font changed flag now
             SetWindowTitle ' update the window title
         ELSE
             _MESSAGEBOX APP_NAME, "Failed to save " + sFontFile + "!", "error"
@@ -572,7 +572,7 @@ FUNCTION OnChooseCharacter%%
                 DrawCharSelector xp, yp, BGRA_WHITE
 
                 ' Also check for mouse click
-                IF _MOUSEBUTTON(1) OR _MOUSEBUTTON(2) THEN
+                IF _MOUSEBUTTON(1) _ORELSE _MOUSEBUTTON(2) THEN
                     ubFontCharacter = 32 * yp + xp
                     OnChooseCharacter = EVENT_EDIT
                     EXIT DO
@@ -585,52 +585,52 @@ FUNCTION OnChooseCharacter%%
         in = _KEYHIT
 
         SELECT CASE in
-            CASE KEY_LEFT_ARROW
+            CASE _KEY_LEFT
                 DrawCharSelector xp, yp, BGRA_DIMGRAY
                 xp = xp - 1
                 IF xp < 0 THEN xp = 31
                 DrawCharSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_RIGHT_ARROW
+            CASE _KEY_RIGHT
                 DrawCharSelector xp, yp, BGRA_DIMGRAY
                 xp = xp + 1
                 IF xp > 31 THEN xp = 0
                 DrawCharSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_UP_ARROW
+            CASE _KEY_UP
                 DrawCharSelector xp, yp, BGRA_DIMGRAY
                 yp = yp - 1
                 IF yp < 0 THEN yp = 7
                 DrawCharSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_DOWN_ARROW
+            CASE _KEY_DOWN
                 DrawCharSelector xp, yp, BGRA_DIMGRAY
                 yp = yp + 1
                 IF yp > 7 THEN yp = 0
                 DrawCharSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_ENTER
+            CASE _KEY_ENTER
                 ubFontCharacter = 32 * yp + xp
                 OnChooseCharacter = EVENT_EDIT
                 EXIT DO
 
-            CASE KEY_F9
+            CASE _KEY_F9
                 OnChooseCharacter = EVENT_SAVE
                 EXIT DO
 
-            CASE KEY_F1
+            CASE _KEY_F1
                 OnChooseCharacter = EVENT_LOAD
                 EXIT DO
 
-            CASE KEY_F2
+            CASE _KEY_F2
                 OnChooseCharacter = EVENT_NEW
                 EXIT DO
 
-            CASE KEY_F5
+            CASE _KEY_F5
                 OnChooseCharacter = EVENT_PREVIEW
                 EXIT DO
 
-            CASE KEY_ESCAPE
+            CASE _KEY_ESC
                 OnChooseCharacter = EVENT_NONE
                 EXIT DO
 
@@ -724,14 +724,14 @@ FUNCTION OnEditCharacter%%
                 ' Also check for mouse click
                 IF _MOUSEBUTTON(1) THEN
                     ' Flag font changed
-                    bFontChanged = TRUE
-                    PSF1_SetGlyphPixel ubFontCharacter, xp, yp, TRUE
+                    bFontChanged = _TRUE
+                    PSF1_SetGlyphPixel ubFontCharacter, xp, yp, _TRUE
                     DrawCharBit ubFontCharacter, xp, yp
                     DrawDemo
                 ELSEIF _MOUSEBUTTON(2) THEN
                     ' Flag font changed
-                    bFontChanged = TRUE
-                    PSF1_SetGlyphPixel ubFontCharacter, xp, yp, FALSE
+                    bFontChanged = _TRUE
+                    PSF1_SetGlyphPixel ubFontCharacter, xp, yp, _FALSE
                     DrawCharBit ubFontCharacter, xp, yp
                     DrawDemo
                 END IF
@@ -743,25 +743,25 @@ FUNCTION OnEditCharacter%%
         in = _KEYHIT
 
         SELECT CASE in
-            CASE KEY_LEFT_ARROW ' Move left
+            CASE _KEY_LEFT ' Move left
                 DrawCellSelector xp, yp, BGRA_DIMGRAY
                 xp = xp - 1
                 IF xp < 0 THEN xp = PSF1_GetFontWidth - 1
                 DrawCellSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_RIGHT_ARROW ' Move right
+            CASE _KEY_RIGHT ' Move right
                 DrawCellSelector xp, yp, BGRA_DIMGRAY
                 xp = xp + 1
                 IF xp >= PSF1_GetFontWidth THEN xp = 0
                 DrawCellSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_UP_ARROW ' Move up
+            CASE _KEY_UP ' Move up
                 DrawCellSelector xp, yp, BGRA_DIMGRAY
                 yp = yp - 1
                 IF yp < 0 THEN yp = PSF1_GetFontHeight - 1
                 DrawCellSelector xp, yp, BGRA_WHITE
 
-            CASE KEY_DOWN_ARROW ' Move down
+            CASE _KEY_DOWN ' Move down
                 DrawCellSelector xp, yp, BGRA_DIMGRAY
                 yp = yp + 1
                 IF yp >= PSF1_GetFontHeight THEN yp = 0
@@ -769,23 +769,23 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_SPACE ' Toggle pixel
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 PSF1_SetGlyphPixel ubFontCharacter, xp, yp, NOT PSF1_GetGlyphPixel(ubFontCharacter, xp, yp)
                 DrawCharBit ubFontCharacter, xp, yp
                 DrawDemo
 
-            CASE KEY_DELETE ' Clear bitmap
+            CASE _KEY_DELETE ' Clear bitmap
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 PSF1_SetGlyphBitmap ubFontCharacter, STRING$(PSF1_GetFontHeight, NULL)
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            CASE KEY_INSERT ' Fill bitmap
+            CASE _KEY_INSERT ' Fill bitmap
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 PSF1_SetGlyphBitmap ubFontCharacter, STRING$(PSF1_GetFontHeight, 255)
                 DrawCharBitmap ubFontCharacter
@@ -793,7 +793,7 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_X, KEY_UPPER_X ' Cut
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 sClipboard = PSF1_GetGlyphBitmap(ubFontCharacter)
                 PSF1_SetGlyphBitmap ubFontCharacter, STRING$(PSF1_GetFontHeight, NULL)
@@ -805,7 +805,7 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_P, KEY_UPPER_P ' Paste
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 PSF1_SetGlyphBitmap ubFontCharacter, sClipboard
                 DrawCharBitmap ubFontCharacter
@@ -813,7 +813,7 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_H, KEY_UPPER_H ' Horizontal flip
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 FOR y = 1 TO PSF1_GetFontHeight
@@ -825,7 +825,7 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_V, KEY_UPPER_V ' Vertical flip
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 PSF1_SetGlyphBitmap ubFontCharacter, String_Reverse(PSF1_GetGlyphBitmap(ubFontCharacter))
                 DrawCharBitmap ubFontCharacter
@@ -833,7 +833,7 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_I, KEY_UPPER_I ' Invert
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 FOR y = 1 TO PSF1_GetFontHeight
@@ -845,7 +845,7 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_A, KEY_UPPER_A ' Horizontal line
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 ASC(tmp, yp + 1) = 255
@@ -855,17 +855,17 @@ FUNCTION OnEditCharacter%%
 
             CASE KEY_LOWER_W, KEY_UPPER_W ' Vertical line
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 FOR y = 0 TO PSF1_GetFontHeight - 1
-                    PSF1_SetGlyphPixel ubFontCharacter, xp, y, TRUE
+                    PSF1_SetGlyphPixel ubFontCharacter, xp, y, _TRUE
                 NEXT
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            CASE KEY_HOME ' Slide left
+            CASE _KEY_HOME ' Slide left
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 FOR y = 1 TO PSF1_GetFontHeight
@@ -876,9 +876,9 @@ FUNCTION OnEditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            CASE KEY_END ' Slide right
+            CASE _KEY_END ' Slide right
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 FOR y = 1 TO PSF1_GetFontHeight
@@ -889,9 +889,9 @@ FUNCTION OnEditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            CASE KEY_PAGE_UP ' Slide up
+            CASE _KEY_PAGEUP ' Slide up
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 sl = ASC(tmp, 1)
@@ -903,9 +903,9 @@ FUNCTION OnEditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            CASE KEY_PAGE_DOWN ' Slide down
+            CASE _KEY_PAGEDOWN ' Slide down
                 ' Flag font changed
-                bFontChanged = TRUE
+                bFontChanged = _TRUE
 
                 tmp = PSF1_GetGlyphBitmap(ubFontCharacter)
                 sl = ASC(tmp, PSF1_GetFontHeight)
@@ -917,12 +917,12 @@ FUNCTION OnEditCharacter%%
                 DrawCharBitmap ubFontCharacter
                 DrawDemo
 
-            CASE KEY_ENTER ' Save & return
+            CASE _KEY_ENTER ' Save & return
                 OnEditCharacter = EVENT_CHOOSE
 
                 EXIT DO
 
-            CASE KEY_ESCAPE ' Cancel & return
+            CASE _KEY_ESC ' Cancel & return
                 PSF1_SetGlyphBitmap ubFontCharacter, cpy
 
                 OnEditCharacter = EVENT_CHOOSE
@@ -992,7 +992,7 @@ SUB SetWindowTitle
     ' First check if we have loaded a font file
     IF LEN(sFontFile) <> NULL THEN ' loaded from disk
         windowTitle = Pathname_GetFileName(sFontFile)
-    ELSEIF bFontChanged AND LEN(sFontFile) = NULL THEN ' creating new
+    ELSEIF bFontChanged _ANDALSO LEN(sFontFile) = NULL THEN ' creating new
         windowTitle = "UNTITLED"
     END IF
 
@@ -1000,11 +1000,7 @@ SUB SetWindowTitle
     IF bFontChanged THEN windowTitle = windowTitle + "*"
 
     ' Finally add the application name
-    IF LEN(windowTitle) <> NULL THEN
-        windowTitle = windowTitle + " - " + APP_NAME
-    ELSE
-        windowTitle = APP_NAME + " " + _OS$
-    END IF
+    windowTitle = _IIF(LEN(windowTitle), windowTitle + " - " + APP_NAME, APP_NAME + _CHR_SPACE + _OS$)
 
     _TITLE windowTitle
     $CHECKING:ON
@@ -1030,7 +1026,7 @@ FUNCTION GetMouseOverCharPosiion%% (mxp AS LONG, myp AS LONG)
             IF PointCollidesWithRect(_MOUSEX, _MOUSEY, 8 + x * (fw + 2), 31 + y * (fh + 2), 9 + fw + x * (fw + 2), 32 + fh + y * (fh + 2)) THEN
                 mxp = x
                 myp = y
-                GetMouseOverCharPosiion = TRUE
+                GetMouseOverCharPosiion = _TRUE
                 EXIT FUNCTION
             END IF
         NEXT
@@ -1065,7 +1061,7 @@ FUNCTION GetMouseOverCellPosition%% (mxp AS LONG, myp AS LONG)
             IF PointCollidesWithRect(_MOUSEX, _MOUSEY, 8 + w1, 19 + h1, 22 + w1, 33 + h1) THEN
                 mxp = x
                 myp = y
-                GetMouseOverCellPosition = TRUE
+                GetMouseOverCellPosition = _TRUE
                 EXIT FUNCTION
             END IF
             x = x + 1
@@ -1157,7 +1153,7 @@ SUB DrawTextBox (l AS LONG, t AS LONG, r AS LONG, b AS LONG, sCaption AS STRING)
     IF LEN(sCaption) <> NULL THEN
         COLOR _BACKGROUNDCOLOR, _DEFAULTCOLOR ' reverse colors
         LOCATE t, l + inBoxWidth \ 2 - LEN(sCaption) \ 2
-        PRINT " "; sCaption; " ";
+        PRINT _CHR_SPACE; sCaption; _CHR_SPACE;
         COLOR _BACKGROUNDCOLOR, _DEFAULTCOLOR ' undo reverse
     END IF
 END SUB
@@ -1166,7 +1162,7 @@ END SUB
 ' Point & box collision test for mouse
 FUNCTION PointCollidesWithRect%% (x AS LONG, y AS LONG, l AS LONG, t AS LONG, r AS LONG, b AS LONG)
     $CHECKING:OFF
-    PointCollidesWithRect = (x >= l AND x <= r AND y >= t AND y <= b)
+    PointCollidesWithRect = (x >= l _ANDALSO x <= r _ANDALSO y >= t _ANDALSO y <= b)
     $CHECKING:ON
 END FUNCTION
 
@@ -1175,7 +1171,7 @@ END FUNCTION
 SUB WaitInput
     DO
         WHILE _MOUSEINPUT
-            IF _MOUSEBUTTON(1) OR _MOUSEBUTTON(2) OR _MOUSEBUTTON(3) THEN EXIT DO
+            IF _MOUSEBUTTON(1) _ORELSE _MOUSEBUTTON(2) _ORELSE _MOUSEBUTTON(3) THEN EXIT DO
         WEND
         _LIMIT UPDATES_PER_SECOND
     LOOP WHILE _KEYHIT <= NULL

@@ -78,7 +78,7 @@ FUNCTION ConvertBin2PSF& (sBinFileName AS STRING, sPSFFileName AS STRING)
         h = LOF(binFileHandle)
 
         ' Basic check: The raw font should be completely divisible by 256
-        IF h MOD 256 <> 0 OR h = 0 THEN
+        IF h MOD 256 <> 0 _ORELSE h = 0 THEN
             CLOSE binFileHandle
             EXIT FUNCTION
         END IF
