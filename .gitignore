@@ -8,3 +8,6 @@
 !include
 # Ignore all exe files
 *.exe
+#Ignore macOS stuff
+*.command
+.DS_Store
