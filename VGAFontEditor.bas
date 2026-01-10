@@ -23,15 +23,15 @@ $EXEICON:'.\VGAFontEditor.ico'
 '-----------------------------------------------------------------------------------------------------------------------
 ' HEADER FILES
 '-----------------------------------------------------------------------------------------------------------------------
-'$INCLUDE:'include/BitwiseOps.bi'
+'$INCLUDE:'include/Core/BitwiseOps.bi'
 '$INCLUDE:'include/Math/Math.bi'
-'$INCLUDE:'include/StringOps.bi'
-'$INCLUDE:'include/Pathname.bi'
-'$INCLUDE:'include/File.bi'
-'$INCLUDE:'include/TimeOps.bi'
-'$INCLUDE:'include/GraphicOps.bi'
-'$INCLUDE:'include/ANSIPrint.bi'
-'$INCLUDE:'include/VGAFont.bi'
+'$INCLUDE:'include/String/StringOps.bi'
+'$INCLUDE:'include/FS/Pathname.bi'
+'$INCLUDE:'include/IO/File.bi'
+'$INCLUDE:'include/Core/TimeOps.bi'
+'$INCLUDE:'include/Graphics/Graphics2D.bi'
+'$INCLUDE:'include/Graphics/ANSIPrint.bi'
+'$INCLUDE:'include/Graphics/VGAFont.bi'
 '-----------------------------------------------------------------------------------------------------------------------
 
 '-----------------------------------------------------------------------------------------------------------------------
@@ -184,7 +184,7 @@ FUNCTION OnWelcomeScreen%%
     _FREEIMAGE img
 
     CONST STAR_COUNT = 1024 ' the maximum stars that we can show
-    DIM starP(1 TO STAR_COUNT) AS Vector3FType
+    DIM starP(1 TO STAR_COUNT) AS Vector3f
     DIM starC(1 TO STAR_COUNT) AS _UNSIGNED LONG
     DIM starA(1 TO STAR_COUNT) AS SINGLE
     DIM AS LONG i, k
@@ -1188,12 +1188,12 @@ END SUB
 '-----------------------------------------------------------------------------------------------------------------------
 ' MODULE FILES
 '-----------------------------------------------------------------------------------------------------------------------
-'$INCLUDE:'include/StringOps.bas'
-'$INCLUDE:'include/Pathname.bas'
-'$INCLUDE:'include/File.bas'
-'$INCLUDE:'include/Base64.bas'
-'$INCLUDE:'include/GraphicOps.bas'
-'$INCLUDE:'include/ANSIPrint.bas'
-'$INCLUDE:'include/VGAFont.bas'
+'$INCLUDE:'include/String/StringOps.bas'
+'$INCLUDE:'include/FS/Pathname.bas'
+'$INCLUDE:'include/IO/File.bas'
+'$INCLUDE:'include/Resource/Base64.bas'
+'$INCLUDE:'include/Graphics/Graphics2D.bas'
+'$INCLUDE:'include/Graphics/ANSIPrint.bas'
+'$INCLUDE:'include/Graphics/VGAFont.bas'
 '-----------------------------------------------------------------------------------------------------------------------
 '-----------------------------------------------------------------------------------------------------------------------
