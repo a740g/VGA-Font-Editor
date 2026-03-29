@@ -1,42 +1,35 @@
 '-----------------------------------------------------------------------------------------------------------------------
 ' VGA font editor
-' Copyright (c) 2024 Samuel Gomes
+' Copyright (c) 2026 Samuel Gomes
 '-----------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------------------------
-' METACOMMANDS
-'-----------------------------------------------------------------------------------------------------------------------
 $VERSIONINFO:CompanyName='Samuel Gomes'
 $VERSIONINFO:FileDescription='VGA Font Editor executable'
 $VERSIONINFO:InternalName='VGAFontEditor'
-$VERSIONINFO:LegalCopyright='Copyright (c) 2024 Samuel Gomes'
+$VERSIONINFO:LegalCopyright='Copyright (c) 2026 Samuel Gomes'
 $VERSIONINFO:LegalTrademarks='All trademarks are property of their respective owners'
 $VERSIONINFO:OriginalFilename='VGAFontEditor.exe'
 $VERSIONINFO:ProductName='VGA Font Editor'
 $VERSIONINFO:Web='https://github.com/a740g'
 $VERSIONINFO:Comments='https://github.com/a740g'
-$VERSIONINFO:FILEVERSION#=4,2,3,0
-$VERSIONINFO:PRODUCTVERSION#=4,2,3,0
+$VERSIONINFO:FILEVERSION#=4,2,4,0
+$VERSIONINFO:PRODUCTVERSION#=4,2,4,0
 $EXEICON:'.\VGAFontEditor.ico'
-'-----------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------------------------
-' HEADER FILES
-'-----------------------------------------------------------------------------------------------------------------------
+$LET TOOLBOX64_STRICT = TRUE
+
 '$INCLUDE:'include/Core/BitwiseOps.bi'
 '$INCLUDE:'include/Math/Math.bi'
-'$INCLUDE:'include/String/StringOps.bi'
+'$INCLUDE:'include/Core/String.bi'
 '$INCLUDE:'include/FS/Pathname.bi'
 '$INCLUDE:'include/IO/File.bi'
+'$INCLUDE:'include/IO/InputManager.bi'
 '$INCLUDE:'include/Core/TimeOps.bi'
 '$INCLUDE:'include/Graphics/Graphics2D.bi'
 '$INCLUDE:'include/Graphics/ANSIPrint.bi'
 '$INCLUDE:'include/Graphics/VGAFont.bi'
-'-----------------------------------------------------------------------------------------------------------------------
+'$INCLUDE:'include/Resource/Resource.bi'
 
-'-----------------------------------------------------------------------------------------------------------------------
-' CONSTANTS
-'-----------------------------------------------------------------------------------------------------------------------
 CONST APP_NAME = "VGA Font Editor"
 ' Program events
 CONST EVENT_NONE = 0
@@ -59,20 +52,12 @@ CONST SCREEN_HEIGHT = 480
 CONST UPDATES_PER_SECOND = 60
 ' Blinky stuff
 CONST BLINK_TICKS = 300
-'-----------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------------------------
-' GLOBAL VARIABLES
-'-----------------------------------------------------------------------------------------------------------------------
 DIM SHARED sFontFile AS STRING ' the name of the font file we are viewing / editing
 DIM SHARED ubFontCharacter AS _UNSIGNED _BYTE ' the glyph we are editing
 DIM SHARED bFontChanged AS _BYTE ' has the font changed?
 DIM SHARED sClipboard AS STRING ' our clipboard that holds a single glyph
-'-----------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------------------------
-' PROGRAM ENTRY POINT
-'-----------------------------------------------------------------------------------------------------------------------
 CHDIR _STARTDIR$ ' change to the directory specifed by the environment
 
 $RESIZE:SMOOTH
@@ -131,11 +116,7 @@ DO
 LOOP
 
 SYSTEM
-'-----------------------------------------------------------------------------------------------------------------------
 
-'-----------------------------------------------------------------------------------------------------------------------
-' FUNCTIONS AND SUBROUTINES
-'-----------------------------------------------------------------------------------------------------------------------
 FUNCTION OnWelcomeScreen%%
     ' Save the current destination
     DIM oldDest AS LONG: oldDest = _DEST
@@ -149,7 +130,7 @@ FUNCTION OnWelcomeScreen%%
     ' Change destination and render the ANSI art
     _DEST img
     RESTORE Data_vga_font_editor_logo_3_ans_3737
-    DIM buffer AS STRING: buffer = Base64_LoadResourceData
+    DIM buffer AS STRING: buffer = Resource_LoadBase64Data
     ANSI_Print buffer
 
     ' Capture rendered image to another image
@@ -421,7 +402,7 @@ FUNCTION OnCommandLine%%
     IF COMMAND$(1) = "/?" _ORELSE COMMAND$(1) = "-?" THEN
         _MESSAGEBOX APP_NAME, APP_NAME + CHR$(13) + "Syntax: EDITFONT [fontfile.psf]" _
             + CHR$(13) + "    /?: Shows this message" _
-            + STRING$(2, 13) + "Copyright (c) 2024 Samuel Gomes" _
+            + STRING$(2, 13) + "Copyright (c) 2026 Samuel Gomes" _
             + STRING$(2, 13) + "https://github.com/a740g/", "info"
         OnCommandLine = EVENT_QUIT
         EXIT FUNCTION ' Exit the function and allow the main loop to handle the quit event
@@ -1183,17 +1164,3 @@ SUB ClearInput
     WEND
     _KEYCLEAR
 END SUB
-'-----------------------------------------------------------------------------------------------------------------------
-
-'-----------------------------------------------------------------------------------------------------------------------
-' MODULE FILES
-'-----------------------------------------------------------------------------------------------------------------------
-'$INCLUDE:'include/String/StringOps.bas'
-'$INCLUDE:'include/FS/Pathname.bas'
-'$INCLUDE:'include/IO/File.bas'
-'$INCLUDE:'include/Resource/Base64.bas'
-'$INCLUDE:'include/Graphics/Graphics2D.bas'
-'$INCLUDE:'include/Graphics/ANSIPrint.bas'
-'$INCLUDE:'include/Graphics/VGAFont.bas'
-'-----------------------------------------------------------------------------------------------------------------------
-'-----------------------------------------------------------------------------------------------------------------------
